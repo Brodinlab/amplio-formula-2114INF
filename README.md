@@ -8,8 +8,7 @@ This repository contains **processed, analysis-ready tables** and **R scripts** 
 - `scripts/figures/`: figure scripts (one script per panel)
 - `scripts/lib/`: shared helpers (loading tables, common functions)
 - `scripts/export/`: scripts that rebuild `data/tables/` from the current workspace sources
-- `output/`: locally generated figures (not intended for GitHub)
-- `scripts/amplio_merge.Rmd`, `scripts/amplio_FCT.Rmd`: legacy analysis reports (reference only)
+- `output/`: locally generated figures
 
 ### Re-generate base tables
 
