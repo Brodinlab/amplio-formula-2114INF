@@ -1,6 +1,6 @@
-## AMPLIO – reproducible figures
+## 2114INF
 
-This repository contains **processed, analysis-ready tables** and **R scripts** to reproduce the figures in the AMPLIO paper.
+This repository contains **processed, analysis-ready tables** and **R scripts** to reproduce the figures in the 2114INF paper.
 
 ### Repository structure
 
