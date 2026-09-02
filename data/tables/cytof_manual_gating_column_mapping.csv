@@ -1,0 +1,33 @@
+original_flowjo_leaf_name,r_safe_column_name
+Neu_Eosino,Neu_Eosino
+Eosinophils,Eosinophils
+Neutrophils,Neutrophils
+Non-Neutrophils_Eosinophils,NonNeutro_Eosino
+B cells,B.cells
+"Non T,B",NonTB
+NK,NK
+CD56bright CD16-NK,CD56bright.CD16neg.NK
+CD56dim CD16+NK,CD56dim.CD16pos.NK
+Non-NK,NonNK
+CD14-CD16-,CD14neg.CD16neg
+CD123+,CD123pos
+Basophils,Basophils
+pDCs,pDCs
+mDCs,mDCs
+Classical monocytes,Classical.monocytes
+Intermediate monocytes,Intermediate.monocytes
+Non-classical monocytes,Nonclassical.monocytes
+T cells,T.cells
+CD4+T,CD4T
+"Q1: CD45RA- , CD27+(TCM)",CD4T.TCM
+"Q2: CD45RA+ , CD27+(Naive)",CD4T.Naive
+"Q3: CD45RA+ , CD27-(TEMRA)",CD4T.TEMRA
+"Q4: CD45RA- , CD27-(TEM)",CD4T.TEM
+Tregs,Tregs
+CD8+T,CD8T
+"Q1: CD45RA- , CD27+ (TCM)",CD8T.TCM
+"Q2: CD45RA+ , CD27+ (Naive)",CD8T.Naive
+"Q3: CD45RA+ , CD27- (TEMRA)",CD8T.TEMRA
+"Q4: CD45RA- , CD27- (TEM)",CD8T.TEM
+HLA-DR+T,HLADRpos.T
+TCRgd cells,TCRgd.cells
