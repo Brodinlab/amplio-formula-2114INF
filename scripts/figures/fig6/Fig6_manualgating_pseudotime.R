@@ -40,10 +40,12 @@
 #      used in the population-level analysis, for consistency.
 #
 # Outputs:
-#   output/tables/manualgating_pseudotime_values.csv        (per-sample pseudotime)
-#   output/tables/manualgating_pseudotime_group_tests.csv   (cross-sectional + omnibus)
+#   output/tables/manualgating_pseudotime_values.csv               (per-sample pseudotime)
+#   output/tables/manualgating_pseudotime_group_tests.csv          (cross-sectional + omnibus)
+#   output/tables/manualgating_pseudotime_change_from_baseline.csv (per-subject delta vs V1)
 #   output/figures/manuscript/Fig6_manualgating_pseudotime_pca.pdf
 #   output/figures/manuscript/Fig6_manualgating_pseudotime_by_group.pdf
+#   output/figures/manuscript/Fig6_manualgating_pseudotime_change_from_baseline.pdf
 
 suppressPackageStartupMessages({
   source("scripts/lib/common.R")
@@ -141,6 +143,35 @@ reduced_model <- lme4::lmer(pseudotime ~ group_feeding + timepoint + group_deliv
 a <- anova(reduced_model, full_model)
 omnibus <- tibble::tibble(lrt_chisq = a$Chisq[2], lrt_df = a$Df[2], p_value = a$`Pr(>Chisq)`[2])
 
+# ---- 5c. Change from baseline (V1): per-subject delta pseudotime, SynF vs CtrlF ----
+# Same rationale as Fig5_manualgating_synf_ctrlf_stats.R -- V1 is the
+# enrollment/baseline visit, before the synbiotic can have acted, so a raw
+# cross-sectional group difference at V1 can't be a treatment effect. Testing
+# each subject's own change from their V1 pseudotime isolates whatever
+# happens AFTER baseline, and is immune to a baseline offset (real or
+# batch-driven) by construction.
+pt_wide <- pt_df |>
+  dplyr::select(subject_id, group_feeding, timepoint, pseudotime) |>
+  tidyr::pivot_wider(names_from = timepoint, values_from = pseudotime, names_prefix = "pt_")
+
+pseudotime_change <- purrr::map_dfr(c("V3", "V5"), function(tp) {
+  tp_col <- paste0("pt_", tp)
+  if (!tp_col %in% colnames(pt_wide)) return(NULL)
+  d <- pt_wide |> dplyr::transmute(group_feeding, delta = .data[[tp_col]] - pt_V1) |> tidyr::drop_na()
+  x <- d$delta[d$group_feeding == "SynF"]
+  y <- d$delta[d$group_feeding == "CtrlF"]
+  wt <- suppressWarnings(wilcox.test(x, y))
+  cd <- cohens_d_with_ci(x, y)
+  tibble::tibble(
+    follow_up_timepoint = tp, n_synf = length(x), n_ctrlf = length(y),
+    median_delta_synf = median(x), median_delta_ctrlf = median(y),
+    p_value = wt$p.value, cohens_d = cd$d, d_ci_lower = cd$ci_lower, d_ci_upper = cd$ci_upper
+  )
+}) |>
+  dplyr::mutate(p_fdr = p.adjust(p_value, method = "BH"))
+
+readr::write_csv(pseudotime_change, file.path(root, "output", "tables", "manualgating_pseudotime_change_from_baseline.csv"))
+
 readr::write_csv(
   dplyr::bind_rows(
     cross_sectional |> dplyr::mutate(test = "cross_sectional_wilcoxon"),
@@ -178,7 +209,29 @@ p3 <- ggplot2::ggplot(pt_df, ggplot2::aes(x = timepoint, y = pseudotime, fill = 
 
 save_pdf(p3, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_by_group.pdf"), width = 5, height = 4)
 
+# ---- Change-from-baseline figure ----
+pt_change_long <- pt_wide |>
+  tidyr::pivot_longer(cols = dplyr::starts_with("pt_V") & !dplyr::any_of("pt_V1"), names_to = "timepoint", values_to = "pt_followup") |>
+  dplyr::mutate(timepoint = sub("pt_", "", timepoint), delta = pt_followup - pt_V1) |>
+  tidyr::drop_na(delta) |>
+  dplyr::mutate(timepoint = factor(timepoint, levels = c("V3", "V5"), labels = c("V1 -> V3", "V1 -> V5")))
+
+p4 <- ggplot2::ggplot(pt_change_long, ggplot2::aes(x = timepoint, y = delta, fill = group_feeding)) +
+  ggplot2::geom_hline(yintercept = 0, color = "grey50", linetype = "dashed") +
+  ggplot2::geom_boxplot(outlier.size = 0.5, position = ggplot2::position_dodge(width = 0.75), width = 0.6) +
+  ggplot2::scale_fill_manual(values = c(CtrlF = "#39AE71", SynF = "#33AEFA"), name = "Feeding Group") +
+  ggplot2::labs(
+    title = "Manually-gated CyTOF pseudotime: change from V1 baseline",
+    x = NULL, y = "Change in pseudotime (z-scored, follow-up - V1)"
+  ) +
+  ggplot2::theme_bw(base_size = 10) +
+  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold", size = 10))
+
+save_pdf(p4, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_change_from_baseline.pdf"), width = 5, height = 4)
+
 cat("\nCross-sectional pseudotime SynF vs CtrlF:\n")
 print(cross_sectional)
 cat("\nOmnibus interaction:\n")
 print(omnibus)
+cat("\nChange from baseline (V1):\n")
+print(pseudotime_change)
