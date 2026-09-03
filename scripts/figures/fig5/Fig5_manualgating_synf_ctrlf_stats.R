@@ -5,6 +5,14 @@
 # and magnitude between the two passes -- see Fig6_manualgating_pseudotime.R
 # header for the same comparison on the pseudotime side.
 #
+# Uses cytof_manual_clean (scripts/export/export_cytof_manual_clean.R):
+# outlier sample excluded (subject PHL001-0073, V1, CtrlF) and cytof_plate
+# regressed out per population (percentage-scale residuals + global mean) --
+# per Petter's instruction, 2026-09-03. group_delivery is kept as an
+# additional covariate in the LME (a separate, already-checked-non-confounded
+# factor); plate is NOT also added as a model term since it is now already
+# regressed out of the input values -- doing both would double-correct.
+#
 # Statistical design mirrors the manuscript's own "Blood immune marker analyses" Methods:
 #   - Cross-sectional: Wilcoxon rank-sum test per population, per timepoint (V1/V3/V5)
 #   - Longitudinal: linear mixed-effects model, freq ~ group * timepoint + delivery + (1|subject),
@@ -35,7 +43,7 @@ load_required_packages(c("dplyr", "tidyr", "purrr", "readr", "lme4", "lmerTest",
 root <- get_repo_root()
 base <- load_base_tables(root)
 
-pop_cols <- setdiff(colnames(base$cytof_manual), "cytof_id")
+pop_cols <- setdiff(colnames(base$cytof_manual_clean), "cytof_id")
 
 meta <- base$metadata |>
   dplyr::mutate(
@@ -46,13 +54,13 @@ meta <- base$metadata |>
     timepoint = factor(timepoint, levels = c("V1", "V3", "V5"))
   )
 
-df <- base$cytof_manual |>
+df <- base$cytof_manual_clean |>
   dplyr::inner_join(
     meta |> dplyr::select(cytof_id, subject_id, group_feeding, group_delivery, timepoint),
     by = "cytof_id"
   )
 
-stopifnot(nrow(df) == nrow(base$cytof_manual)) # every manually-gated sample should have metadata
+stopifnot(nrow(df) == nrow(base$cytof_manual_clean)) # every manually-gated sample should have metadata
 
 # ---- 1. Cross-sectional: Wilcoxon + Cohen's d per population per timepoint ----
 cross_sectional <- purrr::map_dfr(pop_cols, function(pop) {

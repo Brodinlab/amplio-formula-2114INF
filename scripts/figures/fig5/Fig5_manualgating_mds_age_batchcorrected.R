@@ -10,7 +10,15 @@
 # "regress out plate" is done by: CLR-transform (clr_transform(), common.R),
 # fit value ~ plate per population and take residuals (+ global mean, to keep
 # values interpretable), then Euclidean distance + classical MDS on the
-# corrected CLR matrix.
+# corrected CLR matrix. This is a CLR-space correction, distinct from (but
+# consistent in spirit with) the percentage-space correction baked into
+# cytof_manual_clean used for the univariate stats scripts -- the two need
+# different treatments because Aitchison/compositional geometry only makes
+# linear operations valid in log-ratio space.
+#
+# Outlier excluded here too (subject PHL001-0073, V1, CtrlF, cytof_id
+# 453612193 -- see scripts/export/export_cytof_manual_clean.R), per Petter's
+# instruction 2026-09-03.
 
 suppressPackageStartupMessages({
   source("scripts/lib/common.R")
@@ -22,7 +30,11 @@ load_required_packages(c("ggplot2", "dplyr", "tibble"))
 root <- get_repo_root()
 base <- load_base_tables(root)
 
-mat <- as.data.frame(base$cytof_manual)
+OUTLIER_CYTOF_ID <- "453612193"
+
+mat <- base$cytof_manual |>
+  dplyr::filter(as.character(cytof_id) != OUTLIER_CYTOF_ID) |>
+  as.data.frame()
 rownames(mat) <- as.character(mat$cytof_id)
 mat$cytof_id <- NULL
 mat[is.na(mat)] <- 0

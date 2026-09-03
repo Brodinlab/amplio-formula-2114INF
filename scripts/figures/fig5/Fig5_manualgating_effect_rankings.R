@@ -1,18 +1,19 @@
 # Two ranked summaries across all 32 manually-gated populations:
 #   1. Which cell types change most with age (V1/V3/V5), regardless of group.
 #      eta^2 from a one-way ANOVA vs timepoint, pooled across both feeding
-#      groups. Computed on raw percentages (not batch-corrected): plate does
-#      NOT confound timepoint (checked 2026-09-03 -- each plate has balanced
-#      V1/V3/V5 representation), so this ranking is unbiased even though plate
-#      adds some residual noise.
+#      groups.
 #   2. Which cell types differ most by feeding group, BY EFFECT SIZE regardless
 #      of significance (none of these survive FDR at this sample size -- this
 #      is for hypothesis generation / prioritizing what a larger study should
 #      look at, not a claim of a real effect). Uses the change-from-baseline
-#      Cohen's d (V1->V3, V1->V5) as the primary metric, since that is the one
-#      test structurally protected from both the baseline-imbalance issue (NK
-#      cells) and the plate/batch confound (both established 2026-09-03) --
-#      the raw cross-sectional d is included alongside for reference only.
+#      Cohen's d (V1->V3, V1->V5) as the primary metric; the raw cross-sectional
+#      d is included alongside for reference only.
+#
+# Uses cytof_manual_clean (scripts/export/export_cytof_manual_clean.R):
+# outlier sample excluded and cytof_plate regressed out per population, per
+# Petter's instruction 2026-09-03 -- both rankings now use fully batch-
+# corrected, outlier-free data (previously only the MDS scripts were
+# batch-corrected).
 #
 # Outputs:
 #   output/tables/manualgating_age_effect_ranking.csv
@@ -29,7 +30,7 @@ load_required_packages(c("dplyr", "tidyr", "purrr", "readr", "ggplot2"))
 
 root <- get_repo_root()
 base <- load_base_tables(root)
-pop_cols <- setdiff(colnames(base$cytof_manual), "cytof_id")
+pop_cols <- setdiff(colnames(base$cytof_manual_clean), "cytof_id")
 
 meta <- base$metadata |>
   dplyr::mutate(
@@ -37,7 +38,7 @@ meta <- base$metadata |>
     timepoint = factor(timepoint, levels = c("V1", "V3", "V5"))
   )
 
-df <- base$cytof_manual |>
+df <- base$cytof_manual_clean |>
   dplyr::inner_join(meta |> dplyr::select(cytof_id, subject_id, group_feeding, timepoint), by = "cytof_id")
 
 # ---- 1. Age effect ranking (eta^2 vs timepoint, pooled across groups) ----

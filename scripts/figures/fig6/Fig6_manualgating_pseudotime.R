@@ -10,6 +10,10 @@
 # capturing less age-related variance than the 94 unsupervised FlowSOM clusters
 # (fewer, coarser population definitions), independent of QC completeness.
 #
+# Uses cytof_manual_clean (scripts/export/export_cytof_manual_clean.R):
+# outlier sample excluded and cytof_plate regressed out per population -- per
+# Petter's instruction, 2026-09-03.
+#
 #   "Top 20% of time varying immune cell clusters used to construct a pseudotime
 #    metric ... Embedding using PCA ... coloring by pseudotime or actual age."
 #   "We compared pseudotime distributions ... EF-associated trajectories were on
@@ -51,7 +55,7 @@ load_required_packages(c("dplyr", "tidyr", "purrr", "readr", "lme4", "princurve"
 root <- get_repo_root()
 base <- load_base_tables(root)
 
-pop_cols <- setdiff(colnames(base$cytof_manual), "cytof_id")
+pop_cols <- setdiff(colnames(base$cytof_manual_clean), "cytof_id")
 timepoint_days <- c(V1 = 0, V3 = 60, V5 = 120)
 
 meta <- base$metadata |>
@@ -64,7 +68,7 @@ meta <- base$metadata |>
     age_days = timepoint_days[as.character(timepoint)]
   )
 
-df <- base$cytof_manual |>
+df <- base$cytof_manual_clean |>
   dplyr::inner_join(
     meta |> dplyr::select(cytof_id, subject_id, group_feeding, group_delivery, timepoint, age_days),
     by = "cytof_id"
