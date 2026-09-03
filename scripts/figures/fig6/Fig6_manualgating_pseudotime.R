@@ -1,12 +1,14 @@
 # Immune maturation pseudotime from the manually-gated CyTOF table, mirroring the
 # manuscript's existing FlowSOM-cluster-based pseudotime analysis (Fig 6d/f):
 #
-# *** PRELIMINARY -- pipeline validation run, not a finished result. ***
-# The input gating (analysis_20260831.csv) is an ongoing effort, not yet fully
-# assessed/QC'd by Kanth. The weaker/noisier signal here relative to the
-# published FlowSOM-based pseudotime (age-correlation ~0.47) is most plausibly
-# a data-maturity issue, not a flaw in this method -- re-run once the finalized
-# gating file lands before drawing any conclusion about SynF vs CtrlF.
+# Input gating: Kanth's QC'd v1.1 pass (2026-09-03), superseding the preliminary
+# analysis_20260831.csv run (2026-09-02). Age-correlation was essentially
+# unchanged after QC (0.473 -> 0.467), and the same 6 populations top the
+# time-varying ranking in both passes (just reordered) -- so the weaker/noisier
+# signal relative to the published FlowSOM-based pseudotime is NOT explained by
+# the preliminary-gating hypothesis; it more likely reflects manual gating
+# capturing less age-related variance than the 94 unsupervised FlowSOM clusters
+# (fewer, coarser population definitions), independent of QC completeness.
 #
 #   "Top 20% of time varying immune cell clusters used to construct a pseudotime
 #    metric ... Embedding using PCA ... coloring by pseudotime or actual age."

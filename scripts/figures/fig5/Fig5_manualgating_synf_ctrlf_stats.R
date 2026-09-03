@@ -1,9 +1,9 @@
-# Manually-gated CyTOF (analysis_20260831_relative_frequencies.csv) vs. SynF/CtrlF feeding group.
+# Manually-gated CyTOF (analysis_20260831_v1.1_relative_frequencies.csv) vs. SynF/CtrlF feeding group.
 #
-# *** PRELIMINARY -- pipeline validation run, not a finished result. ***
-# The input gating (analysis_20260831.csv) is an ongoing effort, not yet fully
-# assessed/QC'd by Kanth. Null results here should not be read as "no effect" --
-# re-run once the finalized gating file lands before drawing any conclusion.
+# Input gating: Kanth's QC'd v1.1 pass (2026-09-03), superseding the preliminary
+# analysis_20260831.csv run (2026-09-02). Results were consistent in direction
+# and magnitude between the two passes -- see Fig6_manualgating_pseudotime.R
+# header for the same comparison on the pseudotime side.
 #
 # Statistical design mirrors the manuscript's own "Blood immune marker analyses" Methods:
 #   - Cross-sectional: Wilcoxon rank-sum test per population, per timepoint (V1/V3/V5)
