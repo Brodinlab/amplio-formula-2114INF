@@ -56,7 +56,7 @@ readr::write_csv(age_ranking, file.path(root, "output", "tables", "manualgating_
 p_age <- ggplot2::ggplot(age_ranking, ggplot2::aes(x = eta_squared, y = reorder(population, eta_squared))) +
   ggplot2::geom_col(fill = "#1D457FFF") +
   ggplot2::labs(
-    title = "Which cell types change most with age (V1/V3/V5)?",
+    title = "Which cell types change most with age (baseline/2 months/4 months)?",
     x = expression(eta^2 ~ "(one-way ANOVA vs. timepoint, both groups pooled)"), y = NULL
   ) +
   ggplot2::theme_bw(base_size = 8) +
@@ -112,9 +112,13 @@ plot_df <- feeding_group_ranking |>
 p_group <- ggplot2::ggplot(plot_df, ggplot2::aes(x = cohens_d_change_from_baseline, y = population, fill = max_abs_d_timepoint)) +
   ggplot2::geom_col() +
   ggplot2::geom_vline(xintercept = 0, color = "grey40") +
-  ggplot2::scale_fill_manual(values = c(V3 = "#C36377FF", V5 = "#1D457FFF"), name = "Follow-up") +
+  ggplot2::scale_fill_manual(
+    values = c(V3 = "#C36377FF", V5 = "#1D457FFF"),
+    labels = TIMEPOINT_LABELS[c("V3", "V5")],
+    name = "Follow-up"
+  ) +
   ggplot2::labs(
-    title = "Which cell types differ most by feeding group?\n(by effect size, change from V1 baseline -- not gated on significance)",
+    title = "Which cell types differ most by feeding group?\n(by effect size, change from baseline -- not gated on significance)",
     x = "Cohen's d (SynF vs CtrlF, change from baseline)", y = NULL
   ) +
   ggplot2::theme_bw(base_size = 8) +

@@ -16,9 +16,15 @@
 # different treatments because Aitchison/compositional geometry only makes
 # linear operations valid in log-ratio space.
 #
-# Outlier excluded here too (subject PHL001-0073, V1, CtrlF, cytof_id
-# 453612193 -- see scripts/export/export_cytof_manual_clean.R), per Petter's
-# instruction 2026-09-03.
+# Outliers excluded here too (subject PHL001-0073 / cytof_id 453612193, and
+# subject PHL022-0012 / cytof_id 453610960 -- the second only became visible
+# as its own outlier after excluding the first and re-running; see
+# scripts/export/export_cytof_manual_clean.R), per Petter's instruction
+# 2026-09-03.
+#
+# Output split 2026-09-03: the age-colored plot (the actual result) goes to
+# output/figures/manuscript/; the plate-colored sanity-check plot is a QC
+# diagnostic and goes to output/figures/qc/.
 
 suppressPackageStartupMessages({
   source("scripts/lib/common.R")
@@ -30,10 +36,10 @@ load_required_packages(c("ggplot2", "dplyr", "tibble"))
 root <- get_repo_root()
 base <- load_base_tables(root)
 
-OUTLIER_CYTOF_ID <- "453612193"
+OUTLIER_CYTOF_IDS <- c("453612193", "453610960")
 
 mat <- base$cytof_manual |>
-  dplyr::filter(as.character(cytof_id) != OUTLIER_CYTOF_ID) |>
+  dplyr::filter(!as.character(cytof_id) %in% OUTLIER_CYTOF_IDS) |>
   as.data.frame()
 rownames(mat) <- as.character(mat$cytof_id)
 mat$cytof_id <- NULL
@@ -62,9 +68,9 @@ df <- as.data.frame(mds) |>
   tibble::rownames_to_column("cytof_id") |>
   dplyr::left_join(meta_lookup, by = "cytof_id") |>
   dplyr::rename(MDS1 = V1, MDS2 = V2) |>
-  dplyr::mutate(timepoint = factor(timepoint, levels = c("V1", "V3", "V5")))
+  dplyr::mutate(timepoint = relabel_timepoint(timepoint))
 
-color_timepoint <- c("V1" = "#F2AF4AFF", "V3" = "#C36377FF", "V5" = "#1D457FFF")
+color_timepoint <- setNames(c("#F2AF4AFF", "#C36377FF", "#1D457FFF"), TIMEPOINT_LABELS)
 
 p_age <- ggplot2::ggplot(df, ggplot2::aes(x = MDS1, y = MDS2, color = timepoint)) +
   ggplot2::geom_point(size = 2, alpha = 0.7) +
@@ -84,6 +90,6 @@ p_plate_check <- ggplot2::ggplot(df, ggplot2::aes(x = MDS1, y = MDS2, color = pl
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 9, face = "bold"))
 
 save_pdf(p_age, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_mds_age_clean.pdf"), width = 5.5, height = 4.5)
-save_pdf(p_plate_check, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_mds_plate_clean_check.pdf"), width = 6, height = 4.5)
+save_pdf(p_plate_check, file.path(root, "output", "figures", "qc", "Fig5_manualgating_mds_plate_clean_check.pdf"), width = 6, height = 4.5)
 
 cat("n samples:", nrow(df), "\n")

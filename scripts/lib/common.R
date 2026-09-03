@@ -1,5 +1,19 @@
 # Common utilities shared by figure scripts
 
+# Visit-code -> nominal age mapping for the manually-gated CyTOF sub-study
+# (V1 = enrollment/baseline, 14-35 days; V3 = 2 months; V5 = 4 months -- see
+# the manuscript Methods). Used for x-axis positioning (TIMEPOINT_DAYS) and,
+# per Petter's request 2026-09-03, for display labels in every figure instead
+# of the internal V1/V3/V5 codes (TIMEPOINT_LABELS).
+TIMEPOINT_DAYS <- c(V1 = 0, V3 = 60, V5 = 120)
+TIMEPOINT_LABELS <- c(V1 = "Baseline", V3 = "2 months", V5 = "4 months")
+
+# Relabel a vector of V1/V3/V5 codes to the display labels above, as an
+# ordered factor (order follows TIMEPOINT_LABELS, i.e. chronological).
+relabel_timepoint <- function(x) {
+  factor(TIMEPOINT_LABELS[as.character(x)], levels = TIMEPOINT_LABELS)
+}
+
 get_repo_root <- function() {
   # Prefer running from repo root; fall back to script location if possible.
   wd <- normalizePath(getwd(), winslash = "/", mustWork = FALSE)

@@ -44,5 +44,5 @@ p_shipment <- ggplot2::ggplot(df, ggplot2::aes(MDS1, MDS2, color = cytof_shipmen
   ggplot2::theme_bw() +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 9, face = "bold"))
 
-save_pdf(p_plate, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_mds_plate_check.pdf"), width = 6, height = 4.5)
-save_pdf(p_shipment, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_mds_shipment_check.pdf"), width = 6, height = 4.5)
+save_pdf(p_plate, file.path(root, "output", "figures", "qc", "Fig5_manualgating_mds_plate_check.pdf"), width = 6, height = 4.5)
+save_pdf(p_shipment, file.path(root, "output", "figures", "qc", "Fig5_manualgating_mds_shipment_check.pdf"), width = 6, height = 4.5)

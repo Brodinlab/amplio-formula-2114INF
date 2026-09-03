@@ -19,13 +19,12 @@ load_required_packages(c("dplyr", "tidyr", "readr", "ggplot2"))
 
 root <- get_repo_root()
 base <- load_base_tables(root)
-timepoint_days <- c(V1 = 0, V3 = 60, V5 = 120)
 
 meta <- base$metadata |>
   dplyr::mutate(
     group_feeding = factor(dplyr::recode(group_feeding, EF = "SynF", CF = "CtrlF"), levels = c("CtrlF", "SynF")),
     timepoint = factor(timepoint, levels = c("V1", "V3", "V5")),
-    age_days = timepoint_days[as.character(timepoint)]
+    age_days = TIMEPOINT_DAYS[as.character(timepoint)]
   )
 
 nlr_cols <- c("Neutrophils", "B.cells", "T.cells", "NK")
@@ -49,8 +48,8 @@ medians <- nlr_df |>
 
 color_group <- c(CtrlF = "#39AE71", SynF = "#33AEFA")
 
-p <- ggplot2::ggplot(nlr_df, ggplot2::aes(x = age_days, y = nlr)) +
-  ggplot2::geom_line(ggplot2::aes(group = subject_id), color = "grey75", linewidth = 0.3, alpha = 0.5) +
+p <- ggplot2::ggplot(nlr_df, ggplot2::aes(x = age_days, y = nlr, color = group_feeding)) +
+  ggplot2::geom_line(ggplot2::aes(group = subject_id), linewidth = 0.3, alpha = 0.25) +
   ggplot2::geom_line(
     data = medians,
     ggplot2::aes(x = age_days, y = nlr, color = group_feeding, group = group_feeding),
@@ -58,7 +57,7 @@ p <- ggplot2::ggplot(nlr_df, ggplot2::aes(x = age_days, y = nlr)) +
   ) +
   ggplot2::geom_point(data = medians, ggplot2::aes(x = age_days, y = nlr, color = group_feeding), size = 2.2) +
   ggplot2::scale_color_manual(values = color_group, name = "Feeding Group") +
-  ggplot2::scale_x_continuous(breaks = timepoint_days, labels = names(timepoint_days)) +
+  ggplot2::scale_x_continuous(breaks = TIMEPOINT_DAYS, labels = TIMEPOINT_LABELS) +
   ggplot2::labs(
     title = "Neutrophil-to-lymphocyte ratio over time: individual trajectories + group medians",
     x = "Timepoint", y = "NLR (Neutrophils / [B + T + NK])"

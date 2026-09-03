@@ -45,9 +45,9 @@ df <- as.data.frame(mds) |>
     by = "cytof_id"
   ) |>
   dplyr::rename(MDS1 = V1, MDS2 = V2) |>
-  dplyr::mutate(timepoint = factor(timepoint, levels = c("V1", "V3", "V5")))
+  dplyr::mutate(timepoint = relabel_timepoint(timepoint))
 
-color_timepoint <- c("V1" = "#F2AF4AFF", "V3" = "#C36377FF", "V5" = "#1D457FFF")
+color_timepoint <- setNames(c("#F2AF4AFF", "#C36377FF", "#1D457FFF"), TIMEPOINT_LABELS)
 
 p <- ggplot2::ggplot(df, ggplot2::aes(x = MDS1, y = MDS2, color = timepoint)) +
   ggplot2::geom_point(size = 2, alpha = 0.7) +
@@ -60,6 +60,6 @@ p <- ggplot2::ggplot(df, ggplot2::aes(x = MDS1, y = MDS2, color = timepoint)) +
   ggplot2::theme_bw() +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 10, face = "bold"))
 
-save_pdf(p, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_mds_age.pdf"), width = 5.5, height = 4.5)
+save_pdf(p, file.path(root, "output", "figures", "qc", "Fig5_manualgating_mds_age.pdf"), width = 5.5, height = 4.5)
 
 cat("n samples plotted:", nrow(df), "(", sum(is.na(df$timepoint)), "missing timepoint)\n")

@@ -204,7 +204,7 @@ readr::write_csv(delta_from_baseline, file.path(out_table_dir, "manualgating_syn
 # ---- Summary figure: effect size (Cohen's d) per population, faceted by timepoint ----
 plot_df <- cross_sectional |>
   dplyr::filter(!is.na(cohens_d)) |>
-  dplyr::mutate(population = factor(population, levels = rev(pop_cols)))
+  dplyr::mutate(population = factor(population, levels = rev(pop_cols)), timepoint = relabel_timepoint(timepoint))
 
 p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = cohens_d, y = population, color = p_fdr < 0.05)) +
   ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
@@ -226,7 +226,11 @@ delta_plot_df <- delta_from_baseline |>
   dplyr::filter(!is.na(cohens_d)) |>
   dplyr::mutate(
     population = factor(population, levels = rev(pop_cols)),
-    follow_up_timepoint = factor(follow_up_timepoint, levels = c("V3", "V5"), labels = c("V1 -> V3", "V1 -> V5"))
+    follow_up_timepoint = factor(
+      follow_up_timepoint,
+      levels = c("V3", "V5"),
+      labels = paste0("Baseline -> ", TIMEPOINT_LABELS[c("V3", "V5")])
+    )
   )
 
 p_delta <- ggplot2::ggplot(delta_plot_df, ggplot2::aes(x = cohens_d, y = population, color = p_fdr < 0.05)) +
@@ -237,7 +241,7 @@ p_delta <- ggplot2::ggplot(delta_plot_df, ggplot2::aes(x = cohens_d, y = populat
   ggplot2::scale_color_manual(values = c(`TRUE` = "#C36377FF", `FALSE` = "grey40"), name = "FDR<0.05") +
   ggplot2::labs(
     x = "Cohen's d, change from baseline (SynF vs CtrlF)", y = NULL,
-    title = "Manually-gated CyTOF: SynF vs CtrlF, change from V1 baseline"
+    title = "Manually-gated CyTOF: SynF vs CtrlF, change from baseline"
   ) +
   ggplot2::theme_bw(base_size = 8) +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 10, face = "bold"))
