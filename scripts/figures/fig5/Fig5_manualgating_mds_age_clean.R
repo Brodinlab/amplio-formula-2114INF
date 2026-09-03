@@ -71,7 +71,7 @@ p_age <- ggplot2::ggplot(df, ggplot2::aes(x = MDS1, y = MDS2, color = timepoint)
   ggplot2::stat_ellipse(level = 0.95, alpha = 0.3) +
   ggplot2::scale_color_manual(values = color_timepoint, name = "Timepoint") +
   ggplot2::labs(
-    title = "Manually-gated CyTOF, plate effect regressed out: colored by age",
+    title = "Manually-gated CyTOF (outlier removed, plate regressed out): colored by age",
     x = "MDS1", y = "MDS2"
   ) +
   ggplot2::theme_bw() +
@@ -83,7 +83,7 @@ p_plate_check <- ggplot2::ggplot(df, ggplot2::aes(x = MDS1, y = MDS2, color = pl
   ggplot2::theme_bw() +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 9, face = "bold"))
 
-save_pdf(p_age, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_mds_age_batchcorrected.pdf"), width = 5.5, height = 4.5)
-save_pdf(p_plate_check, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_mds_plate_batchcorrected_check.pdf"), width = 6, height = 4.5)
+save_pdf(p_age, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_mds_age_clean.pdf"), width = 5.5, height = 4.5)
+save_pdf(p_plate_check, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_mds_plate_clean_check.pdf"), width = 6, height = 4.5)
 
 cat("n samples:", nrow(df), "\n")
