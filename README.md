@@ -18,6 +18,20 @@ From repository root:
 Rscript scripts/export/export_base_tables.R
 ```
 
+### Cross-cohort harmonized export
+
+```bash
+Rscript scripts/export/export_cross_cohort_lineage_harmonized.R
+```
+
+Maps AMPLIO's manually-gated CyTOF data (`cytof_manual_gating_frequency_clean.csv`) onto
+the lineage-level schema used by the lab's internal cross-cohort longitudinal
+cell-frequency database (PAWS `expData.lineageFreq`/`expData.cytof` — Sweden/Iceland/
+Uganda/Kenya). Output: `data/tables/cross_cohort_lineage_harmonized.csv` (249 rows, 86
+subjects, one row per AMPLIO CyTOF sample) — feeds the regional-immune-development
+project's multiregional "Paper 2" comparison. Not yet appended to the live PAWS table;
+see script header for the exact population-name mapping.
+
 ### Reproduce figures
 
 Examples:
