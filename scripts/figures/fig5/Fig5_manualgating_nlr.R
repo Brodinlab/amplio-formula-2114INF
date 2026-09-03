@@ -6,6 +6,17 @@
 # each expressed as % of CD45+ in this table, so the CD45+ denominator cancels
 # in the ratio -- this is equivalent to the ratio of absolute cell counts.
 #
+# *** UNRESOLVED, pending Kanth's assessment (2026-09-03) ***
+# Neutrophil fractions in the raw gating are biologically implausible for
+# healthy infants (median ~12% of CD45+, some samples down to 0%; a normal
+# pediatric CBC differential rarely drops below ~20-25% even at the
+# lymphocyte-predominant nadir). This is present in the raw FlowJo gating
+# itself, not introduced by any correction step here -- likely a granulocyte
+# gating/technical-loss issue on the Neu_Eosino/Neutrophils branch (or
+# upstream QC gates), not something resolvable computationally. Kanth is
+# assessing this alongside the two excluded outlier samples. Treat any
+# NLR-based finding as unreliable until this is resolved.
+#
 # Output:
 #   output/tables/manualgating_nlr_values.csv
 #   output/figures/manuscript/Fig5_manualgating_nlr_by_time.pdf
