@@ -1,8 +1,8 @@
 original_flowjo_leaf_name,r_safe_column_name
-Neu_Eosino,Neu_Eosino
 Eosinophils,Eosinophils
 Neutrophils,Neutrophils
-Non-Neutrophils_Eosinophils,NonNeutro_Eosino
+Non-neutrophils,NonNeutrophils
+Non-Eosinophils,NonEosinophils
 B cells,B.cells
 "Non T,B",NonTB
 NK,NK
