@@ -117,10 +117,30 @@ eta_squared <- purrr::map_dbl(pop_cols, function(pop) {
 names(eta_squared) <- pop_cols
 
 n_top <- max(2, round(0.20 * length(pop_cols)))
-top_populations <- names(sort(eta_squared, decreasing = TRUE))[seq_len(n_top)]
 
-cat("Top", n_top, "time-varying populations (eta^2 vs timepoint):\n")
-print(round(sort(eta_squared, decreasing = TRUE)[seq_len(n_top)], 3))
+# Redundancy guard: walking the eta^2-sorted list top-down, skip a candidate
+# whose correlation with an already-selected population exceeds 0.9 --
+# without this, near-perfect complement pairs from the gating hierarchy
+# (e.g. Neutrophils/NonNeutrophils, r=-0.9995: they sum to ~100% by
+# construction) can both get selected, feeding the PCA two duplicate
+# (negated) dimensions. That degeneracy destabilized the principal-curve
+# fit and produced a bimodal pseudotime distribution (Petter, 2026-09-04) --
+# caught by checking this correlation directly once he flagged the bimodal
+# shapes. Ranking still considers all populations in pop_cols (unchanged
+# per Petter's instruction); only the greedy pick is now redundancy-aware.
+REDUNDANCY_THRESHOLD <- 0.9
+ranked_populations <- names(sort(eta_squared, decreasing = TRUE))
+top_populations <- character(0)
+for (pop in ranked_populations) {
+  if (length(top_populations) >= n_top) break
+  is_redundant <- length(top_populations) > 0 && any(purrr::map_lgl(top_populations, function(p) {
+    abs(cor(df[[pop]], df[[p]], use = "complete.obs")) >= REDUNDANCY_THRESHOLD
+  }))
+  if (!is_redundant) top_populations <- c(top_populations, pop)
+}
+
+cat("Top", n_top, "time-varying populations (eta^2 vs timepoint, redundancy-filtered):\n")
+print(round(eta_squared[top_populations], 3))
 
 # ---- 2. PCA on the top time-varying populations, all samples pooled ----
 mat <- df |>
