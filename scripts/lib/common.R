@@ -130,3 +130,21 @@ clr_transform <- function(x) {
   log(x / geom_mean)
 }
 
+# Per-population plate correction on the log scale (residuals + global mean,
+# then exponentiate): positive by construction regardless of correction
+# magnitude, unlike an additive correction on the raw percentage scale (see
+# export_cytof_manual_clean.R header for the negative-percentage bug this
+# fixed, 2026-09-03). Shared here so any script needing this exact
+# correction (e.g. reconstructing a differently-population-filtered version
+# of the "clean" table) doesn't reimplement it and risk drift.
+# df must contain pop_cols and have plate_vec aligned row-for-row.
+plate_correct_log_scale <- function(df, pop_cols, plate_vec, pseudocount = 0.001) {
+  for (pop in pop_cols) {
+    log_val <- log(df[[pop]] + pseudocount)
+    fit <- stats::lm(log_val ~ factor(plate_vec))
+    log_corrected <- stats::residuals(fit) + mean(log_val, na.rm = TRUE)
+    df[[pop]] <- pmax(exp(log_corrected) - pseudocount, 0)
+  }
+  df
+}
+

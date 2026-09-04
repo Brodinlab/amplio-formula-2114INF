@@ -64,17 +64,7 @@ cleaned <- raw |>
 
 stopifnot(!any(is.na(cleaned$cytof_plate))) # every remaining sample must have a plate to regress out
 
-PSEUDOCOUNT <- 0.001 # negligible next to any real percentage (0-100 scale); avoids log(0)
-
-for (pop in pop_cols) {
-  log_val <- log(cleaned[[pop]] + PSEUDOCOUNT)
-  fit <- stats::lm(log_val ~ factor(cleaned$cytof_plate))
-  log_corrected <- stats::residuals(fit) + mean(log_val, na.rm = TRUE)
-  cleaned[[pop]] <- exp(log_corrected) - PSEUDOCOUNT
-}
-
-stopifnot(all(sapply(cleaned[pop_cols], function(x) all(x >= -PSEUDOCOUNT - 1e-9)))) # sanity: exp(...) - PSEUDOCOUNT can approach -PSEUDOCOUNT as exp()->0, never below it
-cleaned[pop_cols] <- lapply(cleaned[pop_cols], function(x) pmax(x, 0)) # clamp that expected tiny undershoot to exactly 0
+cleaned <- plate_correct_log_scale(cleaned, pop_cols, cleaned$cytof_plate) # common.R -- log-scale correction, see header
 
 cleaned <- cleaned |> dplyr::select(cytof_id, dplyr::all_of(pop_cols))
 

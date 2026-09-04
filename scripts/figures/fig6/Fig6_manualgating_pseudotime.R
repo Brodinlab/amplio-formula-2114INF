@@ -10,9 +10,12 @@
 # capturing less age-related variance than the 94 unsupervised FlowSOM clusters
 # (fewer, coarser population definitions), independent of QC completeness.
 #
-# Uses cytof_manual_clean (scripts/export/export_cytof_manual_clean.R):
-# outlier sample excluded and cytof_plate regressed out per population -- per
-# Petter's instruction, 2026-09-03.
+# Uses the same outlier-exclusion + plate-correction as cytof_manual_clean
+# (scripts/export/export_cytof_manual_clean.R) but reconstructed locally
+# over ALL 32 raw populations plus NLR as a 33rd candidate (Petter's
+# instruction, 2026-09-04) -- NOT the repo-wide 28-population filtered set
+# (MANUAL_GATING_EXCLUDED_POPULATIONS, common.R), which is reversed here
+# specifically for the pseudotime's time-association population selection.
 #
 #   "Top 20% of time varying immune cell clusters used to construct a pseudotime
 #    metric ... Embedding using PCA ... coloring by pseudotime or actual age."
@@ -57,7 +60,33 @@ load_required_packages(c("dplyr", "tidyr", "purrr", "readr", "lme4", "princurve"
 root <- get_repo_root()
 base <- load_base_tables(root)
 
-pop_cols <- setdiff(colnames(base$cytof_manual_clean), "cytof_id")
+# Reverse the global 28-population filter (common.R
+# MANUAL_GATING_EXCLUDED_POPULATIONS) for pseudotime specifically -- Petter's
+# instruction, 2026-09-04: the time-association ranking below should draw
+# from all 32 raw populations, not the reduced set used elsewhere in this
+# repo. Reconstructed locally from the raw table (never modified) via the
+# same outlier-exclusion + plate-correction used to build the shared "clean"
+# table (scripts/export/export_cytof_manual_clean.R, plate_correct_log_scale
+# in common.R), so this is on identical footing otherwise. Also adds NLR
+# (Neutrophils / [B.cells+T.cells+NK], same definition as
+# Fig5_manualgating_nlr.R) as an additional candidate population, per
+# Petter's instruction -- so it can compete for inclusion in the top-20%
+# time-varying set like any gated population.
+raw_all_pops <- readr::read_csv(file.path(root, "data", "tables", "cytof_manual_gating_frequency.csv"), show_col_types = FALSE) |>
+  dplyr::mutate(cytof_id = as.character(cytof_id)) |>
+  dplyr::filter(!cytof_id %in% MANUAL_GATING_OUTLIER_IDS) |>
+  dplyr::left_join(base$metadata |> dplyr::select(cytof_id, cytof_plate), by = "cytof_id")
+stopifnot(!any(is.na(raw_all_pops$cytof_plate)))
+
+all_pop_cols <- setdiff(colnames(raw_all_pops), c("cytof_id", "cytof_plate"))
+cytof_manual_clean_full <- plate_correct_log_scale(raw_all_pops, all_pop_cols, raw_all_pops$cytof_plate) |>
+  dplyr::select(cytof_id, dplyr::all_of(all_pop_cols))
+
+cytof_manual_clean_full$NLR <- cytof_manual_clean_full$Neutrophils /
+  (cytof_manual_clean_full$B.cells + cytof_manual_clean_full$T.cells + cytof_manual_clean_full$NK)
+cytof_manual_clean_full$NLR[!is.finite(cytof_manual_clean_full$NLR)] <- NA_real_
+
+pop_cols <- setdiff(colnames(cytof_manual_clean_full), "cytof_id")
 timepoint_days <- c(V1 = 0, V3 = 60, V5 = 120)
 
 meta <- base$metadata |>
@@ -70,7 +99,7 @@ meta <- base$metadata |>
     age_days = timepoint_days[as.character(timepoint)]
   )
 
-df <- base$cytof_manual_clean |>
+df <- cytof_manual_clean_full |>
   dplyr::inner_join(
     meta |> dplyr::select(cytof_id, subject_id, group_feeding, group_delivery, timepoint, age_days),
     by = "cytof_id"
@@ -254,7 +283,16 @@ row_medians <- raincloud_df |>
   dplyr::group_by(timepoint, group_feeding, y0) |>
   dplyr::summarise(median_pt = stats::median(pseudotime), .groups = "drop")
 
+stat_annotations <- cross_sectional |>
+  dplyr::left_join(
+    row_positions |> dplyr::distinct(timepoint) |>
+      dplyr::mutate(y_mid = purrr::map_dbl(timepoint, function(tp) mean(row_positions$y0[row_positions$timepoint == tp]))),
+    by = "timepoint"
+  ) |>
+  dplyr::mutate(label = sprintf("d=%.2f, p(Wilcoxon)=%.3f\np(median)=%.3f", cohens_d, p_value, p_value_median))
+
 x_range <- range(raincloud_df$pseudotime)
+x_annotation <- x_range[2] + 0.15 * diff(x_range)
 
 color_group <- c(CtrlF = "#39AE71", SynF = "#33AEFA")
 
@@ -278,21 +316,28 @@ p3 <- ggplot2::ggplot() +
     ggplot2::aes(x = median_pt, xend = median_pt, y = y0, yend = y0 + 0.9),
     color = "black", linewidth = 0.5
   ) +
+  ggplot2::geom_text(
+    data = stat_annotations, ggplot2::aes(x = x_annotation, y = y_mid, label = label),
+    hjust = 0, size = 2.6, color = "grey20"
+  ) +
   ggplot2::scale_fill_manual(values = color_group, name = "Feeding Group") +
   ggplot2::scale_color_manual(values = color_group, guide = "none") +
   ggplot2::scale_y_continuous(
     breaks = row_positions$y0,
     labels = paste0(TIMEPOINT_LABELS[as.character(row_positions$timepoint)], " - ", row_positions$group_feeding)
   ) +
-  ggplot2::coord_cartesian(xlim = c(x_range[1] - 0.1 * diff(x_range), x_range[2] + 0.1 * diff(x_range)), clip = "off") +
+  ggplot2::coord_cartesian(xlim = c(x_range[1] - 0.1 * diff(x_range), x_annotation + 0.35 * diff(x_range)), clip = "off") +
   ggplot2::labs(
     title = "Manually-gated CyTOF: immune maturation age (pseudotime) by feeding group",
     x = "Immune maturation age (pseudotime, z-scored)", y = NULL
   ) +
   ggplot2::theme_bw(base_size = 9) +
-  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold", size = 10))
+  ggplot2::theme(
+    plot.title = ggplot2::element_text(hjust = 0.5, face = "bold", size = 10),
+    plot.margin = ggplot2::margin(5.5, 45, 5.5, 5.5)
+  )
 
-save_pdf(p3, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_by_group.pdf"), width = 6, height = 7)
+save_pdf(p3, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_by_group.pdf"), width = 7, height = 7)
 
 # ---- Change-from-baseline figure ----
 pt_change_long <- pt_wide |>
