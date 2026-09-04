@@ -16,11 +16,10 @@
 # different treatments because Aitchison/compositional geometry only makes
 # linear operations valid in log-ratio space.
 #
-# Outliers excluded here too (subject PHL001-0073 / cytof_id 453612193, and
-# subject PHL022-0012 / cytof_id 453610960 -- the second only became visible
-# as its own outlier after excluding the first and re-running; see
-# scripts/export/export_cytof_manual_clean.R), per Petter's instruction
-# 2026-09-03.
+# Outliers excluded here too, per MANUAL_GATING_OUTLIER_IDS (common.R) --
+# final 3-sample set as of 2026-09-04 (distance-from-centroid > 10 in this
+# same plate-corrected CLR space, on Kanth's re-gated v1.1 base table); see
+# Fig5_manualgating_outlier_check.R and scripts/export/export_cytof_manual_clean.R.
 #
 # Output split 2026-09-03: the age-colored plot (the actual result) goes to
 # output/figures/manuscript/; the plate-colored sanity-check plot is a QC
@@ -36,10 +35,8 @@ load_required_packages(c("ggplot2", "dplyr", "tibble"))
 root <- get_repo_root()
 base <- load_base_tables(root)
 
-OUTLIER_CYTOF_IDS <- c("453612193", "453610960")
-
 mat <- base$cytof_manual |>
-  dplyr::filter(!as.character(cytof_id) %in% OUTLIER_CYTOF_IDS) |>
+  dplyr::filter(!as.character(cytof_id) %in% MANUAL_GATING_OUTLIER_IDS) |>
   as.data.frame()
 rownames(mat) <- as.character(mat$cytof_id)
 mat$cytof_id <- NULL

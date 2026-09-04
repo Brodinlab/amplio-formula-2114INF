@@ -2,16 +2,18 @@
 # cytof_manual_gating_frequency.csv (itself a 1:1 mirror of the flowjo-gating-
 # freqs skill's flattened output -- never modified in place):
 #
-#   1. Excludes two outlier samples, both found as extreme points in the
-#      plate-corrected Aitchison-distance MDS (Fig5_manualgating_mds_age_clean.R):
-#      - subject PHL001-0073, V1, CtrlF, cytof_id 453612193 (found 2026-09-03,
-#        plate_3 -- not a small-plate artifact, that plate has 72 samples)
-#      - subject PHL022-0012, V1, CtrlF, cytof_id 453610960 (found 2026-09-03,
-#        after the first exclusion + re-run revealed it as a second, separate
-#        outlier on plate_4, previously masked by the larger plate_4-vs-rest
-#        cluster separation)
-#      Per Petter's instruction; Kanth separately double-checking both.
-#   2. Regresses out cytof_plate per population -- plate does NOT confound
+#   1. Excludes outlier samples per MANUAL_GATING_OUTLIER_IDS (common.R) --
+#      final set as of 2026-09-04: 3 samples with distance-from-centroid > 10
+#      in plate-corrected CLR/Aitchison space, computed on Kanth's re-gated
+#      v1.1 base table (see Fig5_manualgating_outlier_check.R). Two of the
+#      three (453612193, 453610960) were originally found as extreme points
+#      in the plate-corrected Aitchison-distance MDS on the pre-v1.1 gating
+#      (2026-09-03); the third (453611359) is new to v1.1.
+#   2. Drops intermediate/complement gating-hierarchy populations per
+#      MANUAL_GATING_EXCLUDED_POPULATIONS (common.R) -- NonNK, NonTB,
+#      CD14neg.CD16neg, NonEosinophils (Petter's decision, 2026-09-04): not
+#      informative end-populations, just parent-gate splits.
+#   3. Regresses out cytof_plate per population -- plate does NOT confound
 #      timepoint or (much) feeding group (checked 2026-09-03: balanced
 #      V1/V3/V5 per plate; feeding group only mildly skewed on plate_4, 30
 #      CtrlF/42 SynF), but plate_4 forms a completely separate cluster in
@@ -53,12 +55,11 @@ raw <- readr::read_csv(file.path(tables_dir, "cytof_manual_gating_frequency.csv"
 metadata <- readr::read_csv(file.path(tables_dir, "metadata.csv"), show_col_types = FALSE) |>
   dplyr::mutate(cytof_id = as.character(cytof_id))
 
-OUTLIER_CYTOF_IDS <- c("453612193", "453610960") # PHL001-0073 + PHL022-0012 -- see header
-
 pop_cols <- setdiff(colnames(raw), "cytof_id")
+pop_cols <- setdiff(pop_cols, MANUAL_GATING_EXCLUDED_POPULATIONS) # intermediate/complement gates, not analysed
 
 cleaned <- raw |>
-  dplyr::filter(!cytof_id %in% OUTLIER_CYTOF_IDS) |>
+  dplyr::filter(!cytof_id %in% MANUAL_GATING_OUTLIER_IDS) |>
   dplyr::left_join(metadata |> dplyr::select(cytof_id, cytof_plate), by = "cytof_id")
 
 stopifnot(!any(is.na(cleaned$cytof_plate))) # every remaining sample must have a plate to regress out
@@ -78,4 +79,4 @@ cleaned[pop_cols] <- lapply(cleaned[pop_cols], function(x) pmax(x, 0)) # clamp t
 cleaned <- cleaned |> dplyr::select(cytof_id, dplyr::all_of(pop_cols))
 
 readr::write_csv(cleaned, file.path(tables_dir, "cytof_manual_gating_frequency_clean.csv"))
-cat("Wrote", nrow(cleaned), "rows (excluded", length(OUTLIER_CYTOF_IDS), "outliers from", nrow(raw), "), plate-corrected across", length(pop_cols), "populations\n")
+cat("Wrote", nrow(cleaned), "rows (excluded", length(MANUAL_GATING_OUTLIER_IDS), "outliers from", nrow(raw), "), plate-corrected across", length(pop_cols), "populations\n")

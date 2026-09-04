@@ -18,6 +18,16 @@ load_base_tables <- function(root) {
   if ("cytof_id" %in% colnames(cytof_manual)) cytof_manual$cytof_id <- as.character(cytof_manual$cytof_id)
   if ("cytof_id" %in% colnames(cytof_manual_clean)) cytof_manual_clean$cytof_id <- as.character(cytof_manual_clean$cytof_id)
 
+  # Drop intermediate/complement gating-hierarchy populations (common.R,
+  # MANUAL_GATING_EXCLUDED_POPULATIONS) from both in-memory tables -- the raw
+  # CSVs on disk are left untouched (never edit raw data); every consumer of
+  # base$cytof_manual / base$cytof_manual_clean gets the filtered set for
+  # free, so no per-script filtering needed downstream.
+  cytof_manual <- cytof_manual |>
+    dplyr::select(-dplyr::any_of(MANUAL_GATING_EXCLUDED_POPULATIONS))
+  cytof_manual_clean <- cytof_manual_clean |>
+    dplyr::select(-dplyr::any_of(MANUAL_GATING_EXCLUDED_POPULATIONS))
+
   if ("SampleID" %in% colnames(olink_npx_wide)) olink_npx_wide$SampleID <- as.character(olink_npx_wide$SampleID)
   if ("SampleID" %in% colnames(olink_metadata)) olink_metadata$SampleID <- as.character(olink_metadata$SampleID)
 

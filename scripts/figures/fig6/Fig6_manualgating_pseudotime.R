@@ -122,19 +122,24 @@ cat("\nSpearman correlation, pseudotime vs. nominal age (sanity check, should be
 readr::write_csv(pt_df, file.path(root, "output", "tables", "manualgating_pseudotime_values.csv"))
 
 # ---- 5a. Cross-sectional: pseudotime SynF vs CtrlF, per timepoint (mirrors Fig 6f) ----
+# p_value (Wilcoxon) tests for a general stochastic/rank shift; p_value_median
+# (Mood's median test, common.R) is the more literal test of whether the two
+# groups' medians differ -- both reported since they answer different questions.
 cross_sectional <- purrr::map_dfr(levels(pt_df$timepoint), function(tp) {
   d <- pt_df |> dplyr::filter(timepoint == tp)
   x <- d$pseudotime[d$group_feeding == "SynF"]
   y <- d$pseudotime[d$group_feeding == "CtrlF"]
   wt <- suppressWarnings(wilcox.test(x, y))
+  mt <- moods_median_test(x, y)
   cd <- cohens_d_with_ci(x, y)
   tibble::tibble(
     timepoint = tp, n_synf = length(x), n_ctrlf = length(y),
     median_synf = median(x), median_ctrlf = median(y),
-    p_value = wt$p.value, cohens_d = cd$d, d_ci_lower = cd$ci_lower, d_ci_upper = cd$ci_upper
+    p_value = wt$p.value, p_value_median = mt$p_value, median_test_method = mt$method,
+    cohens_d = cd$d, d_ci_lower = cd$ci_lower, d_ci_upper = cd$ci_upper
   )
 }) |>
-  dplyr::mutate(p_fdr = p.adjust(p_value, method = "BH"))
+  dplyr::mutate(p_fdr = p.adjust(p_value, method = "BH"), p_fdr_median = p.adjust(p_value_median, method = "BH"))
 
 # ---- 5b. Omnibus group:timepoint interaction (LRT) on pseudotime ----
 d_full <- pt_df |> tidyr::drop_na(pseudotime, group_feeding, timepoint, group_delivery, subject_id)
@@ -204,15 +209,90 @@ p2 <- ggplot2::ggplot(pca_plot_df, ggplot2::aes(x = PC1, y = PC2, color = factor
 save_pdf(p1, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_pca.pdf"), width = 5.5, height = 4.5)
 save_pdf(p2, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_pca_age.pdf"), width = 5.5, height = 4.5)
 
-p3 <- ggplot2::ggplot(pt_df, ggplot2::aes(x = timepoint, y = pseudotime, fill = group_feeding)) +
-  ggplot2::geom_boxplot(outlier.size = 0.5, position = ggplot2::position_dodge(width = 0.75), width = 0.6) +
-  ggplot2::scale_fill_manual(values = c(CtrlF = "#39AE71", SynF = "#33AEFA"), name = "Feeding Group") +
-  ggplot2::scale_x_discrete(labels = TIMEPOINT_LABELS) +
-  ggplot2::labs(title = "Manually-gated CyTOF pseudotime by feeding group", x = "Timepoint", y = "Pseudotime (z-scored)") +
-  ggplot2::theme_bw(base_size = 10) +
+# ---- Horizontal raincloud: pseudotime ("immune maturation age") on x-axis,
+# one row per timepoint x feeding-group combination on y. Built manually
+# (half-violin polygon + boxplot + jittered points) since no raincloud
+# package (ggrain/PupillometryR/ggdist/gghalves) is installed. Cohen's d +
+# p-value from the cross-sectional test (computed above) annotated per
+# timepoint.
+row_positions <- tidyr::expand_grid(
+  timepoint = factor(c("V1", "V3", "V5"), levels = c("V1", "V3", "V5")),
+  group_feeding = factor(c("CtrlF", "SynF"), levels = c("CtrlF", "SynF"))
+) |>
+  dplyr::mutate(
+    # Baseline (V1) at top, 4 months (V5) at bottom; within each timepoint,
+    # CtrlF above SynF -- reading order top-to-bottom: Baseline (CtrlF, SynF),
+    # 2 months (CtrlF, SynF), 4 months (CtrlF, SynF). Gaps sized so a row's
+    # rain (extends down to y0-0.85) can't reach the next row's cloud
+    # (extends up to y0+0.9): needs >1.75 clearance, so 1.8 within a
+    # timepoint block and 4.2 between blocks (> 1.8+1.75) -- avoids the
+    # overplotting seen at the previous 1.2/2.6 spacing.
+    timepoint_block = 3 - as.integer(timepoint), # V1->2 (top), V3->1, V5->0 (bottom)
+    group_offset = 2 - as.integer(group_feeding), # CtrlF->1 (top), SynF->0 (bottom)
+    y0 = timepoint_block * 4.2 + group_offset * 1.8
+  )
+
+raincloud_df <- pt_df |>
+  dplyr::inner_join(row_positions, by = c("timepoint", "group_feeding"))
+
+set.seed(42) # reproducible jitter for the "rain" points
+raincloud_df$y_rain <- raincloud_df$y0 - stats::runif(nrow(raincloud_df), 0.20, 0.85)
+
+cloud_polys <- raincloud_df |>
+  dplyr::group_by(timepoint, group_feeding, y0) |>
+  dplyr::group_modify(function(d, key) {
+    dens <- stats::density(d$pseudotime, n = 200)
+    height <- 0.9 * dens$y / max(dens$y) # normalize each row's cloud to the same max height
+    tibble::tibble(
+      x = c(dens$x, rev(dens$x)),
+      y = c(key$y0 + height, rep(key$y0, length(dens$x)))
+    )
+  }) |>
+  dplyr::ungroup()
+
+row_medians <- raincloud_df |>
+  dplyr::group_by(timepoint, group_feeding, y0) |>
+  dplyr::summarise(median_pt = stats::median(pseudotime), .groups = "drop")
+
+x_range <- range(raincloud_df$pseudotime)
+
+color_group <- c(CtrlF = "#39AE71", SynF = "#33AEFA")
+
+p3 <- ggplot2::ggplot() +
+  ggplot2::geom_polygon(
+    data = cloud_polys, ggplot2::aes(x = x, y = y, group = interaction(timepoint, group_feeding), fill = group_feeding),
+    alpha = 0.6, color = NA
+  ) +
+  ggplot2::geom_boxplot(
+    data = raincloud_df,
+    ggplot2::aes(x = pseudotime, y = y0 - 0.15, group = interaction(timepoint, group_feeding), fill = group_feeding),
+    orientation = "y", width = 0.25, outlier.shape = NA, linewidth = 0.3
+  ) +
+  ggplot2::geom_point(
+    data = raincloud_df,
+    ggplot2::aes(x = pseudotime, y = y_rain, color = group_feeding),
+    size = 0.9, alpha = 0.6
+  ) +
+  ggplot2::geom_segment(
+    data = row_medians,
+    ggplot2::aes(x = median_pt, xend = median_pt, y = y0, yend = y0 + 0.9),
+    color = "black", linewidth = 0.5
+  ) +
+  ggplot2::scale_fill_manual(values = color_group, name = "Feeding Group") +
+  ggplot2::scale_color_manual(values = color_group, guide = "none") +
+  ggplot2::scale_y_continuous(
+    breaks = row_positions$y0,
+    labels = paste0(TIMEPOINT_LABELS[as.character(row_positions$timepoint)], " - ", row_positions$group_feeding)
+  ) +
+  ggplot2::coord_cartesian(xlim = c(x_range[1] - 0.1 * diff(x_range), x_range[2] + 0.1 * diff(x_range)), clip = "off") +
+  ggplot2::labs(
+    title = "Manually-gated CyTOF: immune maturation age (pseudotime) by feeding group",
+    x = "Immune maturation age (pseudotime, z-scored)", y = NULL
+  ) +
+  ggplot2::theme_bw(base_size = 9) +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold", size = 10))
 
-save_pdf(p3, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_by_group.pdf"), width = 5, height = 4)
+save_pdf(p3, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_by_group.pdf"), width = 6, height = 7)
 
 # ---- Change-from-baseline figure ----
 pt_change_long <- pt_wide |>

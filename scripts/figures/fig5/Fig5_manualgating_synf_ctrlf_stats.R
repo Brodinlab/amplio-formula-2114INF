@@ -222,10 +222,22 @@ p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = cohens_d, y = population, color =
 save_pdf(p, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_effect_sizes.pdf"), width = 10, height = 7)
 
 # ---- Summary figure: change-from-baseline effect size, faceted by follow-up timepoint ----
+# Population order: ranked by descending Cohen's d at V5 (4 months), falling
+# back to V3 for any population without a V5 value -- one shared ranking
+# across both facets, per Petter's request to sort highest-to-lowest.
+population_order <- delta_from_baseline |>
+  dplyr::mutate(follow_up_timepoint = factor(follow_up_timepoint, levels = c("V5", "V3"))) |>
+  dplyr::filter(!is.na(cohens_d)) |>
+  dplyr::arrange(population, follow_up_timepoint) |>
+  dplyr::distinct(population, .keep_all = TRUE) |>
+  dplyr::arrange(dplyr::desc(cohens_d)) |>
+  dplyr::pull(population)
+population_order <- c(population_order, setdiff(pop_cols, population_order))
+
 delta_plot_df <- delta_from_baseline |>
   dplyr::filter(!is.na(cohens_d)) |>
   dplyr::mutate(
-    population = factor(population, levels = rev(pop_cols)),
+    population = factor(population, levels = rev(population_order)),
     follow_up_timepoint = factor(
       follow_up_timepoint,
       levels = c("V3", "V5"),

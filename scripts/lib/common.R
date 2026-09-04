@@ -14,6 +14,32 @@ relabel_timepoint <- function(x) {
   factor(TIMEPOINT_LABELS[as.character(x)], levels = TIMEPOINT_LABELS)
 }
 
+# Manual-gating CyTOF outlier exclusion, final set (Petter's decision,
+# 2026-09-04): samples with Euclidean distance from centroid > 10 in
+# plate-corrected CLR (Aitchison) space, computed on Kanth's re-gated v1.1
+# base table -- see Fig5_manualgating_outlier_check.R for the detection
+# method and Fig5_manualgating_pca_biplot_dist10_excluded.R for the
+# threshold choice. Supersedes the earlier 2-sample list found ad hoc on the
+# pre-v1.1 gating (453612193, 453610960 only -- 453611359 is new to v1.1).
+# Single source of truth: every script that excludes outliers from the
+# manual-gating table should reference this constant, not a local copy.
+MANUAL_GATING_OUTLIER_IDS <- c("453612193", "453611359", "453610960")
+
+# Manual-gating populations excluded from analysis (Petter's decision,
+# 2026-09-04): intermediate/complement nodes in the gating hierarchy, not
+# informative end-populations in their own right --
+#   NonNK               = CD45+ minus NK (parent split, not a population)
+#   NonTB               = CD45+ minus T/B cells (parent split)
+#   CD14neg.CD16neg     = monocyte-gate leftover after classical/intermediate/
+#                         nonclassical are removed, not a defined cell type
+#   NonEosinophils      = parent split under CD45+ (see also NonNeutrophils,
+#                         the sibling split -- NOT excluded here since Petter
+#                         did not list it; flagged for his awareness)
+# Single source of truth: every script analysing the manual-gating table's
+# populations should drop these via this constant, not a local copy. Applies
+# to the population set, orthogonal to MANUAL_GATING_OUTLIER_IDS (samples).
+MANUAL_GATING_EXCLUDED_POPULATIONS <- c("NonNK", "NonTB", "CD14neg.CD16neg", "NonEosinophils")
+
 get_repo_root <- function() {
   # Prefer running from repo root; fall back to script location if possible.
   wd <- normalizePath(getwd(), winslash = "/", mustWork = FALSE)
@@ -76,6 +102,25 @@ cohens_d_with_ci <- function(x, y) {
   ci_upper <- d + 1.96 * se_d
   d_str <- paste0(round(d, 2), " [", round(ci_lower, 2), ", ", round(ci_upper, 2), "]")
   list(d = d, ci_lower = ci_lower, ci_upper = ci_upper, d_str = d_str)
+}
+
+# Mood's median test: tests whether two samples come from populations with
+# the same median (distinct from Wilcoxon/Mann-Whitney, which tests for a
+# general stochastic/rank shift and only reduces to a median comparison
+# under a location-shift assumption). Builds the standard 2x2
+# above/at-or-below-grand-median x group contingency table; uses Fisher's
+# exact test instead of chi-squared whenever an expected cell count < 5.
+moods_median_test <- function(x, y) {
+  x <- x[!is.na(x)]
+  y <- y[!is.na(y)]
+  grand_median <- stats::median(c(x, y))
+  tab <- matrix(
+    c(sum(x > grand_median), sum(x <= grand_median), sum(y > grand_median), sum(y <= grand_median)),
+    nrow = 2
+  )
+  expected_ok <- all(suppressWarnings(stats::chisq.test(tab)$expected) >= 5)
+  test <- if (expected_ok) stats::chisq.test(tab, correct = TRUE) else stats::fisher.test(tab)
+  list(p_value = test$p.value, method = if (expected_ok) "chisq" else "fisher", grand_median = grand_median)
 }
 
 clr_transform <- function(x) {
