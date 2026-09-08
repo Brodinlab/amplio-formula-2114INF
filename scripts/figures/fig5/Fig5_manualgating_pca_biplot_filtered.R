@@ -12,7 +12,7 @@
 #      groups (group- and time-blind).
 #   2. Time-associated: populations ranked by eta-squared (one-way ANOVA
 #      vs. timepoint) on the same CLR values -- same method used to select
-#      the pseudotime input populations in Fig6_manualgating_pseudotime.R,
+#      the pseudotime input populations in fig5_pseudotime_manualgating_by_feeding.R,
 #      reused here for consistency.
 # Both take the top 20 of 32 populations (Petter: 6/32 was too skewed).
 # Change N_TOP below to adjust.

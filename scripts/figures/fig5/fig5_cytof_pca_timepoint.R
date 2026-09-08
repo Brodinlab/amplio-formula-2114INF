@@ -38,11 +38,11 @@ p <- ggplot2::ggplot(df, ggplot2::aes(x = MDS1, y = MDS2, color = timepoint)) +
   ggplot2::geom_point(size = 2, alpha = 0.7) +
   ggplot2::stat_ellipse(level = 0.95, alpha = 0.3) +
   ggplot2::scale_color_manual(values = color_timepoint, name = "Timepoint") +
-  ggplot2::labs(title = "Panel B: Colored by Timepoint", x = "MDS1", y = "MDS2") +
+  ggplot2::labs(title = "CyTOF PCA colored by timepoint", x = "MDS1", y = "MDS2") +
   ggplot2::theme_bw() +
   ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 11, face = "bold"))
 
 out_dir <- file.path(root, "output/figures/manuscript")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-ggplot2::ggsave(file.path(out_dir, "Fig5B_mds_panelB_timepoint.pdf"), plot = p, width = 5, height = 4, device = "pdf", dpi = 300)
+ggplot2::ggsave(file.path(out_dir, "fig5_cytof_pca_timepoint.pdf"), plot = p, width = 5, height = 4, device = "pdf", dpi = 300)
 

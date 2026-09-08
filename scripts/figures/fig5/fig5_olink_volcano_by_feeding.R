@@ -92,10 +92,15 @@ plots <- lapply(seq_along(timepoints), function(i) {
 combined <- plots[[1]] + plots[[2]] + plots[[3]] +
   patchwork::plot_layout(ncol = 3, guides = "collect") +
   patchwork::plot_annotation(
-    title = "Figure 4.13: Volcano Plots - Proteins by Feeding Group"
+    title = "Olink volcano plots by feeding group (V1/V3/V5)"
   )
 
+# NOTE (2026-09-08): this produces 3 cross-sectional panels (V1/V3/V5) using raw
+# log2FC + per-timepoint Wilcoxon p-value. The current manuscript's Fig. 5 volcano
+# panel legend instead describes a 2-panel (2mo/4mo only) plot using Cohen's d
+# change-from-baseline vs. -log10(p) -- a different metric and panel count. Not
+# reconciled yet; flagged for Petter to confirm which is the submission version.
 out_dir <- file.path(root, "output/figures/manuscript")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-ggplot2::ggsave(file.path(out_dir, "Fig5F_olink_volcano_top_hits.pdf"), plot = combined, width = 15, height = 5, units = "in", dpi = 300, device = "pdf")
+ggplot2::ggsave(file.path(out_dir, "fig5_olink_volcano_by_feeding.pdf"), plot = combined, width = 15, height = 5, units = "in", dpi = 300, device = "pdf")
 

@@ -1,6 +1,6 @@
 # MDS of Aitchison distances between samples (manually-gated CyTOF populations),
 # colored by age/timepoint -- does overall cell composition shift with age?
-# Same method as the existing FlowSOM-based Fig5B_mds_panelB_timepoint.R, applied
+# Same method as the existing FlowSOM-based fig5_cytof_pca_timepoint.R, applied
 # to base$cytof_manual instead of base$cytof_lineage, for direct comparison.
 
 suppressPackageStartupMessages({
@@ -22,7 +22,7 @@ stopifnot("cytof_id" %in% colnames(cytof_manual))
 # distance matrix rownames as bare integers "1","2",... and lose the
 # cytof_id -> row mapping entirely -- converting to a plain data.frame first
 # is required for rownames() to actually take effect. The existing
-# Fig5B_mds_panelB_timepoint.R / Fig5C_mds_panelA_feeding.R scripts in this
+# fig5_cytof_pca_timepoint.R / Fig5C_mds_panelA_feeding.R scripts in this
 # repo have the same `rownames(mat) <- as.character(mat$cytof_id)` pattern on
 # a tibble and are very likely affected the same way on this R/tibble version
 # -- flagging, not fixed here (out of scope for this script).

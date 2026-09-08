@@ -46,8 +46,8 @@
 #   output/tables/manualgating_pseudotime_values.csv               (per-sample pseudotime)
 #   output/tables/manualgating_pseudotime_group_tests.csv          (cross-sectional + omnibus)
 #   output/tables/manualgating_pseudotime_change_from_baseline.csv (per-subject delta vs V1)
-#   output/figures/manuscript/Fig6_manualgating_pseudotime_pca.pdf
-#   output/figures/manuscript/Fig6_manualgating_pseudotime_by_group.pdf
+#   output/figures/manuscript/fig5_pseudotime_manualgating_pca.pdf
+#   output/figures/manuscript/fig5_pseudotime_manualgating_by_group.pdf
 
 suppressPackageStartupMessages({
   source("scripts/lib/common.R")
@@ -254,8 +254,8 @@ p2 <- ggplot2::ggplot(pca_plot_df, ggplot2::aes(x = PC1, y = PC2, color = factor
   ggplot2::labs(title = "colored by actual age (baseline/2 months/4 months)") +
   ggplot2::theme_bw(base_size = 9)
 
-save_pdf(p1, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_pca.pdf"), width = 5.5, height = 4.5)
-save_pdf(p2, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_pca_age.pdf"), width = 5.5, height = 4.5)
+save_pdf(p1, file.path(root, "output", "figures", "manuscript", "fig5_pseudotime_manualgating_pca.pdf"), width = 5.5, height = 4.5)
+save_pdf(p2, file.path(root, "output", "figures", "manuscript", "fig5_pseudotime_manualgating_pca_age.pdf"), width = 5.5, height = 4.5)
 
 # ---- Horizontal raincloud: pseudotime ("immune maturation age") on x-axis,
 # one row per timepoint x feeding-group combination on y. Built manually
@@ -356,7 +356,7 @@ p3 <- ggplot2::ggplot() +
     plot.margin = ggplot2::margin(5.5, 45, 5.5, 5.5)
   )
 
-save_pdf(p3, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_by_group.pdf"), width = 7, height = 7)
+save_pdf(p3, file.path(root, "output", "figures", "manuscript", "fig5_pseudotime_manualgating_by_group.pdf"), width = 7, height = 7)
 
 cat("\nCross-sectional pseudotime SynF vs CtrlF:\n")
 print(cross_sectional)

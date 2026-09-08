@@ -60,5 +60,5 @@ combined <- gridExtra::grid.arrange(p1, p2, p3, p4, ncol = 2, nrow = 2)
 
 out_dir <- file.path(root, "output/figures/manuscript")
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-ggplot2::ggsave(file.path(out_dir, "Fig2A_growth_zscores.pdf"), plot = combined, width = 10, height = 10)
+ggplot2::ggsave(file.path(out_dir, "Fig2_growth_zscores_panels_abcd.pdf"), plot = combined, width = 10, height = 10)
 

@@ -34,15 +34,23 @@ see script header for the exact population-name mapping.
 
 ### Reproduce figures
 
+See `scripts/figures/FIGURE_MAP.md` for the full manuscript-figure-to-script mapping,
+including open items (figures still pending from Nestlé, and a few unresolved
+figure/legend mismatches flagged for the corresponding author).
+
 Examples:
 
 ```bash
-Rscript scripts/figures/fig2/Fig2A_growth_zscores.R
-Rscript scripts/figures/fig5/Fig5B_mds_panelB_timepoint.R
-Rscript scripts/figures/fig6/Fig6D_cytof_topClusters_PCA_timepoint.R
+Rscript scripts/figures/fig2/Fig2_growth_zscores_panels_abcd.R
+Rscript scripts/figures/fig5/fig5_cytof_pca_timepoint.R
+Rscript scripts/figures/fig6/Fig6B_fct_distribution.R
 ```
 
 By default, scripts write PDFs into `output/figures/manuscript/`.
+
+This repository (not the upstream `nehciq/2114INF` original, which is stale as of
+2026-05 and does not reflect the current manuscript) is the canonical source for
+figure reproduction going forward.
 
 ### QC vs. manuscript figures (convention added 2026-09-03)
 

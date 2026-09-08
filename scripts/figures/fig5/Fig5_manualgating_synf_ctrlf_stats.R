@@ -2,7 +2,7 @@
 #
 # Input gating: Kanth's QC'd v1.1 pass (2026-09-03), superseding the preliminary
 # analysis_20260831.csv run (2026-09-02). Results were consistent in direction
-# and magnitude between the two passes -- see Fig6_manualgating_pseudotime.R
+# and magnitude between the two passes -- see fig5_pseudotime_manualgating_by_feeding.R
 # header for the same comparison on the pseudotime side.
 #
 # Uses cytof_manual_clean (scripts/export/export_cytof_manual_clean.R):

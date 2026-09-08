@@ -19,9 +19,9 @@
 #   output/tables/olink_cytokine_pseudotime_values.csv
 #   output/tables/olink_cytokine_pseudotime_group_tests.csv
 #   output/tables/olink_cytokine_pseudotime_change_from_baseline.csv
-#   output/figures/manuscript/Fig6_olink_cytokine_pseudotime_pca.pdf
-#   output/figures/manuscript/Fig6_olink_cytokine_pseudotime_pca_age.pdf
-#   output/figures/manuscript/Fig6_olink_cytokine_pseudotime_by_group.pdf
+#   output/figures/manuscript/fig5_pseudotime_olink_cytokine_pca.pdf
+#   output/figures/manuscript/fig5_pseudotime_olink_cytokine_pca_age.pdf
+#   output/figures/manuscript/fig5_pseudotime_olink_cytokine_by_group.pdf
 
 suppressPackageStartupMessages({
   source("scripts/lib/common.R")
@@ -167,8 +167,8 @@ p2 <- ggplot2::ggplot(pca_plot_df, ggplot2::aes(x = PC1, y = PC2, color = factor
   ggplot2::labs(title = "colored by actual age (baseline/2 months/4 months)") +
   ggplot2::theme_bw(base_size = 9)
 
-save_pdf(p1, file.path(root, "output", "figures", "manuscript", "Fig6_olink_cytokine_pseudotime_pca.pdf"), width = 5.5, height = 4.5)
-save_pdf(p2, file.path(root, "output", "figures", "manuscript", "Fig6_olink_cytokine_pseudotime_pca_age.pdf"), width = 5.5, height = 4.5)
+save_pdf(p1, file.path(root, "output", "figures", "manuscript", "fig5_pseudotime_olink_cytokine_pca.pdf"), width = 5.5, height = 4.5)
+save_pdf(p2, file.path(root, "output", "figures", "manuscript", "fig5_pseudotime_olink_cytokine_pca_age.pdf"), width = 5.5, height = 4.5)
 
 # ---- Horizontal raincloud: same construction as Fig6_olink_pseudotime.R ----
 row_positions <- tidyr::expand_grid(
@@ -251,7 +251,7 @@ p3 <- ggplot2::ggplot() +
   ggplot2::theme_bw(base_size = 9) +
   ggplot2::theme(plot.margin = ggplot2::margin(5.5, 45, 5.5, 5.5))
 
-save_pdf(p3, file.path(root, "output", "figures", "manuscript", "Fig6_olink_cytokine_pseudotime_by_group.pdf"), width = 7, height = 7)
+save_pdf(p3, file.path(root, "output", "figures", "manuscript", "fig5_pseudotime_olink_cytokine_by_group.pdf"), width = 7, height = 7)
 
 cat("\nCross-sectional cytokine pseudotime SynF vs CtrlF:\n")
 print(cross_sectional)

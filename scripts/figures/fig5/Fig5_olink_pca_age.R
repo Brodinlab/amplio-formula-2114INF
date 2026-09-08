@@ -10,7 +10,7 @@
 # one-way ANOVA of each protein's NPX value against time point (V1/V3/V5),
 # computed across all samples irrespective of feeding group -- the same
 # method used for the CyTOF manual-gating pseudotime population ranking
-# (Fig6_manualgating_pseudotime.R), for consistency across modalities.
+# (fig5_pseudotime_manualgating_by_feeding.R), for consistency across modalities.
 # Benjamini-Hochberg FDR is applied across all 358 proteins.
 #
 # Output:

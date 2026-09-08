@@ -5,7 +5,7 @@
 #
 # Supersedes wgcna_finegrained_brown_raincloud.R (removed): that raincloud
 # construction was visually identical to the existing pseudotime raincloud
-# (Fig6_manualgating_pseudotime.R), so this uses a different chart type --
+# (fig5_pseudotime_manualgating_by_feeding.R), so this uses a different chart type --
 # one violin per timepoint, split in half (left = SynF, right = CtrlF),
 # rather than a stacked cloud/box/jitter per group/timepoint row.
 #
