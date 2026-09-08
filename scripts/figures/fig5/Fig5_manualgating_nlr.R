@@ -70,7 +70,7 @@ p <- ggplot2::ggplot(nlr_df, ggplot2::aes(x = age_days, y = nlr, color = group_f
   ggplot2::scale_color_manual(values = color_group, name = "Feeding Group") +
   ggplot2::scale_x_continuous(breaks = TIMEPOINT_DAYS, labels = TIMEPOINT_LABELS) +
   ggplot2::labs(
-    title = "Neutrophil-to-lymphocyte ratio over time: individual trajectories + group medians",
+    title = "Neutrophil-to-lymphocyte ratio over time:\nindividual trajectories + group medians",
     x = "Timepoint", y = "NLR (Neutrophils / [B + T + NK])"
   ) +
   ggplot2::theme_bw(base_size = 11) +

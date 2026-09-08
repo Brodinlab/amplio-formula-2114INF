@@ -48,7 +48,6 @@
 #   output/tables/manualgating_pseudotime_change_from_baseline.csv (per-subject delta vs V1)
 #   output/figures/manuscript/Fig6_manualgating_pseudotime_pca.pdf
 #   output/figures/manuscript/Fig6_manualgating_pseudotime_by_group.pdf
-#   output/figures/manuscript/Fig6_manualgating_pseudotime_change_from_baseline.pdf
 
 suppressPackageStartupMessages({
   source("scripts/lib/common.R")
@@ -358,30 +357,6 @@ p3 <- ggplot2::ggplot() +
   )
 
 save_pdf(p3, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_by_group.pdf"), width = 7, height = 7)
-
-# ---- Change-from-baseline figure ----
-pt_change_long <- pt_wide |>
-  tidyr::pivot_longer(cols = dplyr::starts_with("pt_V") & !dplyr::any_of("pt_V1"), names_to = "timepoint", values_to = "pt_followup") |>
-  dplyr::mutate(timepoint = sub("pt_", "", timepoint), delta = pt_followup - pt_V1) |>
-  tidyr::drop_na(delta) |>
-  dplyr::mutate(timepoint = factor(
-    timepoint,
-    levels = c("V3", "V5"),
-    labels = paste0("Baseline -> ", TIMEPOINT_LABELS[c("V3", "V5")])
-  ))
-
-p4 <- ggplot2::ggplot(pt_change_long, ggplot2::aes(x = timepoint, y = delta, fill = group_feeding)) +
-  ggplot2::geom_hline(yintercept = 0, color = "grey50", linetype = "dashed") +
-  ggplot2::geom_boxplot(outlier.size = 0.5, position = ggplot2::position_dodge(width = 0.75), width = 0.6) +
-  ggplot2::scale_fill_manual(values = c(CtrlF = "#39AE71", SynF = "#33AEFA"), name = "Feeding Group") +
-  ggplot2::labs(
-    title = "Manually-gated CyTOF pseudotime: change from baseline",
-    x = NULL, y = "Change in pseudotime (z-scored, follow-up - baseline)"
-  ) +
-  ggplot2::theme_bw(base_size = 10) +
-  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, face = "bold", size = 10))
-
-save_pdf(p4, file.path(root, "output", "figures", "manuscript", "Fig6_manualgating_pseudotime_change_from_baseline.pdf"), width = 5, height = 4)
 
 cat("\nCross-sectional pseudotime SynF vs CtrlF:\n")
 print(cross_sectional)

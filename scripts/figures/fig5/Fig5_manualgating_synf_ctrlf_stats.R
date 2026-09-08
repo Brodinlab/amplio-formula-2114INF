@@ -222,43 +222,61 @@ p <- ggplot2::ggplot(plot_df, ggplot2::aes(x = cohens_d, y = population, color =
 save_pdf(p, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_effect_sizes.pdf"), width = 10, height = 7)
 
 # ---- Summary figure: change-from-baseline effect size, faceted by follow-up timepoint ----
-# Population order: ranked by descending Cohen's d at V5 (4 months), falling
-# back to V3 for any population without a V5 value -- one shared ranking
-# across both facets, per Petter's request to sort highest-to-lowest.
-population_order <- delta_from_baseline |>
-  dplyr::mutate(follow_up_timepoint = factor(follow_up_timepoint, levels = c("V5", "V3"))) |>
-  dplyr::filter(!is.na(cohens_d)) |>
-  dplyr::arrange(population, follow_up_timepoint) |>
-  dplyr::distinct(population, .keep_all = TRUE) |>
-  dplyr::arrange(dplyr::desc(cohens_d)) |>
-  dplyr::pull(population)
-population_order <- c(population_order, setdiff(pop_cols, population_order))
-
+# Each facet (Baseline->2mo, Baseline->4mo) is ranked independently by its own
+# descending Cohen's d, per Petter's request, 2026-09-06 -- supersedes the
+# single shared V5-then-V3 ranking used previously. Standard "reorder within
+# facet" trick: build a population|||facet factor whose levels are ordered
+# facet-by-facet (ascending d within each facet block, since the first factor
+# level plots at the bottom), then facet with scales = "free_y" so each panel
+# only draws -- and thus only orders -- its own levels; axis labels then strip
+# the "|||facet" suffix back off.
 delta_plot_df <- delta_from_baseline |>
   dplyr::filter(!is.na(cohens_d)) |>
   dplyr::mutate(
-    population = factor(population, levels = rev(population_order)),
     follow_up_timepoint = factor(
       follow_up_timepoint,
       levels = c("V3", "V5"),
       labels = paste0("Baseline -> ", TIMEPOINT_LABELS[c("V3", "V5")])
-    )
+    ),
+    p_label = sprintf("p=%.3f", p_value)
+  ) |>
+  dplyr::arrange(follow_up_timepoint, cohens_d) |>
+  dplyr::mutate(
+    population_facet = paste(population, follow_up_timepoint, sep = "|||"),
+    population_facet = factor(population_facet, levels = unique(population_facet))
   )
 
-p_delta <- ggplot2::ggplot(delta_plot_df, ggplot2::aes(x = cohens_d, y = population, color = p_fdr < 0.05)) +
+# Fixed x-position for the nominal-p-value text: just right of the widest CI
+# across both facets (shared/fixed x-scale, not facet-specific). Point color
+# still reflects BH-FDR<0.05.
+d_range <- range(c(delta_plot_df$d_ci_lower, delta_plot_df$d_ci_upper), na.rm = TRUE)
+p_label_x <- max(delta_plot_df$d_ci_upper, na.rm = TRUE) + 0.08 * diff(d_range)
+
+p_delta <- ggplot2::ggplot(delta_plot_df, ggplot2::aes(x = cohens_d, y = population_facet, color = p_fdr < 0.05)) +
   ggplot2::geom_vline(xintercept = 0, linetype = "dashed", color = "grey50") +
   ggplot2::geom_errorbarh(ggplot2::aes(xmin = d_ci_lower, xmax = d_ci_upper), height = 0.2) +
   ggplot2::geom_point(size = 1.8) +
-  ggplot2::facet_wrap(~follow_up_timepoint, nrow = 1) +
-  ggplot2::scale_color_manual(values = c(`TRUE` = "#C36377FF", `FALSE` = "grey40"), name = "FDR<0.05") +
-  ggplot2::labs(
-    x = "Cohen's d, change from baseline (SynF vs CtrlF)", y = NULL,
-    title = "Manually-gated CyTOF: SynF vs CtrlF, change from baseline"
+  ggplot2::geom_text(
+    ggplot2::aes(x = p_label_x, label = p_label),
+    hjust = 0, size = 2.2, color = "grey30"
   ) +
+  ggplot2::facet_wrap(~follow_up_timepoint, nrow = 1, scales = "free_y") +
+  ggplot2::scale_y_discrete(labels = function(x) sub("\\|\\|\\|.*$", "", x)) +
+  ggplot2::scale_color_manual(values = c(`TRUE` = "#C36377FF", `FALSE` = "grey40"), name = "FDR<0.05") +
+  ggplot2::scale_x_continuous(expand = ggplot2::expansion(mult = c(0.05, 0.22))) +
+  ggplot2::labs(x = "Cohen's d, change from baseline (SynF vs CtrlF)", y = NULL) +
   ggplot2::theme_bw(base_size = 8) +
-  ggplot2::theme(plot.title = ggplot2::element_text(hjust = 0.5, size = 10, face = "bold"))
+  # Title, legend, facet strips, and caption stripped per Petter's manually
+  # edited version, 2026-09-06 (panel identity -- baseline vs 2mo/4mo -- and
+  # figure legend text are supplied in the manuscript's own figure legend
+  # instead of on the plot itself).
+  ggplot2::theme(
+    legend.position = "none",
+    strip.background = ggplot2::element_blank(),
+    strip.text = ggplot2::element_blank()
+  )
 
-save_pdf(p_delta, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_change_from_baseline.pdf"), width = 7, height = 7)
+save_pdf(p_delta, file.path(root, "output", "figures", "manuscript", "Fig5_manualgating_change_from_baseline.pdf"), width = 9, height = 7)
 
 cat("Cross-sectional: ", sum(cross_sectional$p_fdr < 0.05, na.rm = TRUE), " of ", nrow(cross_sectional),
     " (population x timepoint) comparisons FDR-significant; ",

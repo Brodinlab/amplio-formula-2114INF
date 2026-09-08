@@ -32,13 +32,128 @@ MANUAL_GATING_OUTLIER_IDS <- c("453612193", "453611359", "453610960")
 #   NonTB               = CD45+ minus T/B cells (parent split)
 #   CD14neg.CD16neg     = monocyte-gate leftover after classical/intermediate/
 #                         nonclassical are removed, not a defined cell type
-#   NonEosinophils      = parent split under CD45+ (see also NonNeutrophils,
-#                         the sibling split -- NOT excluded here since Petter
-#                         did not list it; flagged for his awareness)
+#   NonEosinophils      = parent split under CD45+ (sibling of NonNeutrophils
+#                         below, same rationale)
+#   NonNeutrophils      = parent split under CD45+ (sibling of NonEosinophils
+#                         above) -- added per Petter's confirmation, 2026-09-06
 # Single source of truth: every script analysing the manual-gating table's
 # populations should drop these via this constant, not a local copy. Applies
 # to the population set, orthogonal to MANUAL_GATING_OUTLIER_IDS (samples).
-MANUAL_GATING_EXCLUDED_POPULATIONS <- c("NonNK", "NonTB", "CD14neg.CD16neg", "NonEosinophils")
+MANUAL_GATING_EXCLUDED_POPULATIONS <- c("NonNK", "NonTB", "CD14neg.CD16neg", "NonEosinophils", "NonNeutrophils")
+
+# Olink NPX outlier exclusion (Petter's decision, 2026-09-06): none. Unlike
+# the manually-gated CyTOF check (3 samples clearly separated from the rest,
+# distance>10 cliff), the Olink per-protein-z-scored distance-from-centroid
+# check (Fig5_olink_outlier_check.R) showed a smooth decline with no clear
+# separation -- the 8 samples crossing the median+3*MAD line are only mildly
+# offset from the bulk, not a distinct outlier cluster. All samples are kept.
+# Single source of truth: every script analysing Olink NPX data should
+# reference this constant (empty for now), not assume no exclusion locally --
+# so a future revision only needs to change it here.
+OLINK_OUTLIER_IDS <- character(0)
+
+# Olink NPX cytokine classification (Petter's request, 2026-09-06): the Olink
+# Explore Inflammation panel bundles many non-cytokine analytes (receptors,
+# enzymes, structural/ECM proteins, growth factors) alongside true cytokines
+# -- e.g. the top age-associated proteins overall include LAMA4, COLEC12,
+# CKAP4, AGRN, ARNT, HSD11B1, none of which are cytokines. No official Olink
+# panel protein-class annotation file was found in this repo or on OneDrive
+# (data/raw/olink is not present in this checkout), so this is a manually
+# curated, immunology-standard cytokine list -- NOT sourced from an
+# Olink-provided annotation. Categories included:
+#   - Interleukins (IL-prefixed ligands; IL-receptor subunits like IL10RA,
+#     IL2RB, IL4R, etc. are EXCLUDED as receptors, not cytokines themselves;
+#     IL1RN/IL-1Ra is kept as it is itself a secreted regulatory cytokine)
+#   - Interferons (IFNG; IFNGR1/IFNLR1 receptors excluded)
+#   - TNF-superfamily LIGANDS (TNF, TNFSF*, FASLG; TNFRSF* receptors and
+#     CD40/LTBR excluded as receptors)
+#   - Chemokines (CCL*/CXCL*)
+#   - Colony-stimulating factors (CSF1, CSF3)
+#   - A small set of other classic secreted immune cytokines (EPO, OSM,
+#     CRLF1, FLT3LG)
+# Deliberately EXCLUDED as a distinct category, not cytokines by the
+# conventional definition, even though Olink's Inflammation panel includes
+# them: general growth factors (FGF*, VEGF*, PDGF*, EGF, TGFA, TGFB1, GDNF-
+# family ligands ARTN/NRTN/PSPN, PGF, angiopoietins). This is a judgment call
+# at the margins -- flag to Petter if any inclusion/exclusion looks wrong.
+# Single source of truth: every script classifying Olink proteins as
+# cytokines should reference this constant, not a local copy.
+OLINK_CYTOKINE_PROTEINS <- c(
+  # Interleukins
+  "IL2", "IL4", "IL1B", "IL33", "IL13", "IL10", "IL24", "IL20", "IL11", "IL17F",
+  "IL5", "IL17A", "IL17C", "IL17D", "IL1A", "IL7", "IL15", "IL6", "IL32", "IL16",
+  "IL18", "IL12B", "IL1RN",
+  # Interferons
+  "IFNG",
+  # TNF-superfamily ligands
+  "TNF", "TNFSF11", "TNFSF10", "TNFSF12", "TNFSF13", "FASLG",
+  # Chemokines
+  "CXCL14", "CXCL12", "CXCL9", "CXCL10", "CXCL8", "CXCL6", "CXCL17", "CXCL3", "CXCL1",
+  "CCL7", "CCL26", "CCL28", "CCL3", "CCL13", "CCL11", "CCL25", "CCL21", "CCL23",
+  "CCL4", "CCL17", "CCL22", "CCL24", "CCL20",
+  # Colony-stimulating factors
+  "CSF3", "CSF1",
+  # Other classic secreted immune cytokines
+  "EPO", "OSM", "CRLF1", "FLT3LG"
+)
+
+# Vaccine Luminex IgG panel: antigen category classification (Petter's
+# request, 2026-09-06), distinguishing which of the 36 antigens (see
+# export_vaccine.R) reflect the infant's OWN active vaccine response versus
+# maternally-transferred antibody, since these answer different biological
+# questions and are easily conflated in a flat antigen list --
+#   INFANT_SCHEDULE_VACCINE_ANTIGENS: pathogens covered by the Philippines
+#     EPI schedule doses an infant would have received by 4 months
+#     (diphtheria, tetanus, pertussis, hepatitis B, poliovirus, rotavirus --
+#     typically given at 6/10/14 weeks) -- IgG here can plausibly reflect
+#     the infant's own vaccine response.
+#   MATERNAL_MMR_ANTIGENS: measles/mumps/rubella antigens -- MMR is not
+#     given until ~9-12 months in this schedule, so any IgG detected at V1/
+#     V3/V5 (0-4 months) is maternally-transferred (transplacental) antibody
+#     and its postnatal decay, NOT an infant response.
+#   NON_VACCINE_PATHOGEN_ANTIGENS: CMV, EBV, RSV, HPV, S. pneumoniae --
+#     present in this Luminex panel but not part of the infant's
+#     immunization schedule at all; reflect natural exposure (mostly
+#     maternal/environmental) rather than vaccination of either kind.
+# All three sets are disjoint and together cover all 36 non-control antigens
+# exactly (stopifnot-checked in export_vaccine.R against the manuscript's
+# stated panel size).
+INFANT_SCHEDULE_VACCINE_ANTIGENS <- c(
+  "Diphtheria mutated toxin", "Diphtheria Toxoid",
+  "Clostridium tetani Tetanus Toxoid", "Tetanus Toxoid, Recombinant Heavy Chain Fragment C",
+  "B. pertussis toxin (mutant)", "Bordetella pertussis Filamentous Hemagglutinin (FHA)",
+  "Bordetella pertussis Filamentous Hemagglutinin (FHA) - Bulk antigen",
+  "Bordetella pertussis Filamentous Hemagglutinin (FHA) - Nativeantigen",
+  "B. pertussis Pertactin Protein[His]",
+  "B. Pertussis whole-cell (strain tahoma I)", "B. Pertussis whole-cell (strain tahoma I) Mix&Go",
+  "HBV Surface Antigen (subtype adw)",
+  "Recombinant Poliovirus type 1 Capsid protein (strain Sabin)",
+  "Recombinant Poliovirus type 2 VP3-VP1 capsid Protein [His]",
+  "Recombinant Poliovirus type 3 VP3-VP1 capsid protein",
+  "Rotavirus VP7 Protein", "RotaVirus (Strain SA-11)"
+)
+MATERNAL_MMR_ANTIGENS <- c(
+  "Measles Virus Nucleoprotein (HEK293)", "Native Measles virus",
+  "Mumps Virus Nucleoprotein Recombinant", "Mumps virus nucleoprotein, inactivated pathogen.",
+  "Native Mumps virus", "Mumps virus nucleoprotein",
+  "Rubella E1", "Rubella virus E1, C-terminal SHFc-tag", "Rubella Spike Ectodomain (E1-E2)",
+  "Rubella virus nucleoprotein, C-terminal His-tag", "Rubella Virus Grade 4, natural antigen."
+)
+NON_VACCINE_PATHOGEN_ANTIGENS <- c(
+  "Cytomegalovirus glycoprotein B (gB)", "Respiratory Syncytial Virus A Glycoprotein G",
+  "HPV type 16 L1 Protein (full length)", "HPV type 18 L1 Protein (full length)",
+  "Recombinant Human Papilloma Virus type 33 L1 protein (VLP)", "Recombinant HPV type 6 L1 protein (VLP)",
+  "Epstein Barr Virus gp125", "S. pneumoniae Cell Wall Polysaccharide Antigen"
+)
+
+classify_vaccine_antigen <- function(antigen) {
+  dplyr::case_when(
+    antigen %in% INFANT_SCHEDULE_VACCINE_ANTIGENS ~ "Infant-schedule vaccine",
+    antigen %in% MATERNAL_MMR_ANTIGENS ~ "Maternal/MMR-family",
+    antigen %in% NON_VACCINE_PATHOGEN_ANTIGENS ~ "Non-vaccine pathogen",
+    TRUE ~ NA_character_
+  )
+}
 
 get_repo_root <- function() {
   # Prefer running from repo root; fall back to script location if possible.
