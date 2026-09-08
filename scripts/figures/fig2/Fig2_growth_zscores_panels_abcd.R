@@ -1,5 +1,5 @@
 suppressPackageStartupMessages({
-  source("code/lib/common.R")
+  source("scripts/lib/common.R")
 })
 
 load_required_packages(c("ggplot2", "dplyr", "readr", "gridExtra"))

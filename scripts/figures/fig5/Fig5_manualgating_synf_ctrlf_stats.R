@@ -31,7 +31,7 @@
 #   output/figures/manuscript/Fig5_manualgating_effect_sizes.pdf
 
 suppressPackageStartupMessages({
-  # NOTE: other scripts in this repo source("code/lib/...") but the actual
+  # NOTE: other scripts in this repo source("scripts/lib/...") but the actual
   # directory is scripts/lib/ (pre-existing path mismatch upstream, not fixed
   # here since that's out of scope for this script) -- using the real path.
   source("scripts/lib/common.R")

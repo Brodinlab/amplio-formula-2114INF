@@ -1,5 +1,5 @@
 suppressPackageStartupMessages({
-  source("code/lib/common.R")
+  source("scripts/lib/common.R")
 })
 
 load_required_packages(c("dplyr", "readr", "tidyr", "tibble", "stringr", "OlinkAnalyze"))

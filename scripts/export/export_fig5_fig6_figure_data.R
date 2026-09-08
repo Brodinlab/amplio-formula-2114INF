@@ -1,6 +1,6 @@
 suppressPackageStartupMessages({
-  source("code/lib/common.R")
-  source("code/lib/load_data.R")
+  source("scripts/lib/common.R")
+  source("scripts/lib/load_data.R")
 })
 
 load_required_packages(c(

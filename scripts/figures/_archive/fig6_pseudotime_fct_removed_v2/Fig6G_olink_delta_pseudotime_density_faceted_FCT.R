@@ -1,6 +1,6 @@
 suppressPackageStartupMessages({
-  source("code/lib/common.R")
-  source("code/lib/load_base_tables.R")
+  source("scripts/lib/common.R")
+  source("scripts/lib/load_base_tables.R")
 })
 
 load_required_packages(c("ggplot2", "dplyr", "tibble", "tidyr", "viridis", "SingleCellExperiment", "slingshot"))
