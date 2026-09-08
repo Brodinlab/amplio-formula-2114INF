@@ -15,6 +15,14 @@ in each section and moved to `_archive/superseded/`.
 Also fixed 2026-09-08: 17 scripts repo-wide had a stale `source("code/lib/...")` path
 (the actual directory is `scripts/lib/`) and would not execute at all. Corrected.
 
+**Manuscript text edits (2026-09-08):** Petter decided the manuscript will state 32
+manually-gated CyTOF populations throughout, and confirmed the in-text Fig. 5 letter
+citations (Results/Methods currently disagree with the legend for pseudotime, the Olink
+volcano, and the WGCNA panels) should be corrected to match this map, plus two new panel
+descriptions added (f: six-module WGCNA network, g: Module 3 eigengene). The actual
+before/after manuscript text was given directly to Petter to paste in — it is not part of
+this repo or the wiki, since Petter edits the manuscript document himself.
+
 ## Figure 1 — Study design and cohort
 No script — graphical trial-design drawing, not code-generated. (Confirmed with Petter.)
 
@@ -24,9 +32,10 @@ No script — graphical trial-design drawing, not code-generated. (Confirmed wit
 
 **Structurally matches the legend exactly** (same 4 growth metrics + IGSQ-13 with the
 same two clinical-threshold annotations), but **cannot be numerically verified**: both
-scripts require `data/figure_data/fig2/*.csv`, which does not exist anywhere in this
-repo. Either export that table here, or confirm these figures were finalized from data
-that lives outside this repo.
+scripts require `data/figure_data/fig2/*.csv`, which does not exist in this repo, nor in
+Qi Chen's original `nehciq/2114INF` (checked directly, 2026-09-08 — no `data/figure_data/`
+directory exists there at all). Either export that table here, or confirm these figures
+were finalized from data that lives outside both repos.
 
 ## Figure 3 — Markers of intestinal health
 No script in this repo. Pending: request from Nestlé.
@@ -45,11 +54,14 @@ No script in this repo. Pending: request from Nestlé.
   — load on PC1" exactly.
 - Top PC2 loadings: Neutrophils, Nonclassical.monocytes — matches legend's "neutrophils and
   nonclassical monocytes load on PC2" exactly.
-- **Open discrepancy:** this script runs on 32 populations (`base$cytof_manual`, "Kanth's
-  re-gated v1.1" raw table), not the "27 manually-gated" populations stated in the legend
-  and Methods. The statistics match too precisely to be the wrong script, but the
-  population-count wording in the manuscript needs reconciling (32, not 27, for this
-  specific panel — the CyTOF Δ-baseline and WGCNA panels genuinely do use 27, see below).
+- **Population count — resolved by Petter, 2026-09-08:** this script runs on 32
+  populations (`base$cytof_manual`, "Kanth's re-gated v1.1" raw table). The manuscript
+  previously stated "27 manually-gated" here; Petter has decided the manuscript will state
+  **32 populations throughout** (Results, Methods, and this legend), since that is what
+  this verified script actually uses. The Fig. 5c/WGCNA scripts below still run on 27
+  populations internally (the manuscript's Methods used to explain this as "28 raw, 27
+  after excluding one redundant population" — that exclusion clause is being dropped from
+  the text rather than reconciled to 32; the underlying scripts were not re-run on 32).
 - Ruled out: `fig5_cytof_pca_timepoint.R` (uses the 16-population lineage table + MDS on
   Aitchison distance, not PCA-with-variance-explained — cannot produce the legend's
   numbers); `Fig5_manualgating_pca_age_clean.R` (same family, 1-sample exclusion instead
