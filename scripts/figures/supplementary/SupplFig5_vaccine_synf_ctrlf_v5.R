@@ -9,6 +9,10 @@
 # interaction framework is used here, matching the narrower method already
 # established for this data type in the manuscript.
 #
+# Moved to Supplementary Figure 5, per Petter's request, 2026-09-08 (was
+# a Fig5 main-figure candidate; superseded there by the WGCNA module 3
+# panels). No content change -- only output location/filename.
+#
 # All 36 non-control antigens are included (export_vaccine.R), matching the
 # manuscript's literal "36 vaccine-related antigens" count -- see that
 # script's header for the Hib-antigen-missing / CMV-EBV-RSV-HPV-included
@@ -20,7 +24,7 @@
 #
 # Output:
 #   output/tables/vaccine_synf_ctrlf_v5.csv
-#   output/figures/manuscript/Fig5_vaccine_volcano_v5.pdf
+#   output/figures/supplementary/SupplFig5_vaccine_volcano_v5.pdf
 
 suppressPackageStartupMessages({
   source("scripts/lib/common.R")
@@ -85,7 +89,7 @@ p_volcano <- ggplot2::ggplot(volcano_df, ggplot2::aes(x = cohens_d, y = neg_log1
   ggplot2::labs(x = "Cohen's d (SynF vs CtrlF), IgG z-score at 4 months", y = expression(-log[10]~"(nominal p-value)")) +
   ggplot2::theme_bw(base_size = 9)
 
-save_pdf(p_volcano, file.path(root, "output", "figures", "manuscript", "Fig5_vaccine_volcano_v5.pdf"), width = 7, height = 6)
+save_pdf(p_volcano, file.path(root, "output", "figures", "supplementary", "SupplFig5_vaccine_volcano_v5.pdf"), width = 7, height = 6)
 
 cat("Vaccine IgG, SynF vs CtrlF at V5 (4 months):", sum(results$p_fdr < 0.05), "of", nrow(results),
     "antigens FDR-significant;", sum(results$p_value < 0.05), "nominal p<0.05\n")
